@@ -21,6 +21,6 @@ assignees: ''
 
 **Actual behavior:**
 
-**Relevant logs** (from fppd.log or config/debug.log):
+**Relevant logs** (from `/home/fpp/media/logs/plugin-fpp-haCommands.log`):
 
 **Screenshots (if applicable):**

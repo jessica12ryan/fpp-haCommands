@@ -142,7 +142,7 @@
 
             <h4>Command fails when the playlist runs?</h4>
             <p>Check the FPPD log for HA plugin errors:</p>
-            <pre>grep -i "HA Commands\|fpp-haCommands" /home/fpp/media/logs/fppd.log | tail -20</pre>
+            <pre>tail -20 /home/fpp/media/logs/plugin-fpp-haCommands.log</pre>
 
             <h4>Need to refresh after adding/removing HA entities?</h4>
             <p>

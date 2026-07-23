@@ -119,14 +119,14 @@ In xLights sequence editor:
 
 ## Troubleshooting
 
-Check the debug log after running a command:
+Check the plugin log after running a command:
 ```bash
-cat /home/fpp/media/plugins/fpp-haCommands/config/debug.log
+tail -20 /home/fpp/media/logs/plugin-fpp-haCommands.log
 ```
 
 Check FPPD logs for plugin errors:
 ```bash
-grep -i "plugin\|ha" /home/fpp/media/logs/fppd.log | tail -20
+grep -i "plugin-fpp-haCommands" /home/fpp/media/logs/plugin-fpp-haCommands.log | tail -20
 ```
 
 ## 📄 License

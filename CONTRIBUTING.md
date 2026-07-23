@@ -13,7 +13,7 @@ Please include:
 - xLights version (if applicable)
 - Home Assistant version
 - Steps to reproduce
-- Relevant logs from `/home/fpp/media/logs/fppd.log` or `config/debug.log`
+- Relevant logs from `/home/fpp/media/logs/plugin-fpp-haCommands.log`
 
 If the issue is related to a major security concern that by posting on GitHub could open FPP instances to vulnerabilities, than we request that you email your concern to jessica12ryan@outlook.com so we can privately address it.
 
@@ -56,7 +56,7 @@ When FPP plays a sequence with embedded commands:
 
 You can verify execution in the FPP log:
 ```bash
-grep "HA Commands" /home/fpp/media/logs/fppd.log
+grep "HA Commands" /home/fpp/media/logs/plugin-fpp-haCommands.log
 ```
 
 ## Files
