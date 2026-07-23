@@ -1,4 +1,4 @@
-# Home Assistant Commands Plugin for FPP (fpp-haCommands)
+# <img src="icon.png" alt="icon" width="32" style="vertical-align: middle;"> Home Assistant Commands Plugin for FPP (fpp-haCommands)
 
 > **An FPP plugin that brings Home Assistant entities and actions into FPP as commands with entity dropdowns that can be used in playlists, scheduler, GPIO's, and xLights Sequences.**
 
