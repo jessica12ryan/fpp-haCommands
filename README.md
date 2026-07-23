@@ -19,11 +19,12 @@
 ### Plugin Manager (Recommended)
 
 1. In FPP UI, go to **Content Setup → Plugin Manager**
-2. Enter this URL and click **Get Plugin Info**:
+2. Look for "Home Assistant Commands Plugin for FPP" in the list of plugins and click Install
+
+Additionally this plugin can be installed with the following JSON URL:
    ```
    https://raw.githubusercontent.com/jessica12ryan/fpp-haCommands/main/pluginInfo.json
    ```
-3. Click the install button next to the plugin (Home Assistant Commands Plugin for FPP)
 
 ## Configuration
 
