@@ -67,11 +67,6 @@ fi
 # Ensure config directory exists
 mkdir -p "${PLUGIN_DIR}/config" 2>/dev/null || true
 
-# Set execute permissions on command scripts
-if [ -d "${PLUGIN_DIR}/commands" ]; then
-    chmod +x ${PLUGIN_DIR}/commands/*.php 2>/dev/null || true
-fi
-
 # Fix permissions so the web server can write config and command files
 # (must run AFTER all files are created, so globs match)
 if chown -R fpp:fpp "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" 2>/dev/null || chown -R :fpp "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" 2>/dev/null; then
@@ -80,6 +75,11 @@ if chown -R fpp:fpp "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" 2>/dev/null 
 else
     chmod 775 "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" 2>/dev/null || true
     find "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" -type f -exec chmod 664 {} + 2>/dev/null || true
+fi
+
+# Re-apply execute bit on command scripts (find/chmod 664 above strips it)
+if [ -d "${PLUGIN_DIR}/commands" ]; then
+    chmod +x ${PLUGIN_DIR}/commands/*.php 2>/dev/null || true
 fi
 
 echo "fpp-haCommands: Plugin installed successfully."
