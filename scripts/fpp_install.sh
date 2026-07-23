@@ -8,8 +8,6 @@
 ## Install/Update Script                                   ##
 #############################################################
 
-set -e
-
 # --- Self-update bootstrap ---
 PLUGIN_DIR="/home/fpp/media/plugins/fpp-haCommands"
 if [ ! -d "$PLUGIN_DIR" ] && [ -n "$MEDIADIR" ]; then

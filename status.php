@@ -9,15 +9,21 @@
  * #############################################################
  */
 $pluginDir = __DIR__;
-$settingsFile = $pluginDir . '/config/ha_settings.json';
+$iniFile = $pluginDir . '/config/plugin.fpp-haCommands';
+$oldJsonFile = $pluginDir . '/config/ha_settings.json';
 $cacheFile = $pluginDir . '/config/entities_cache.json';
 $descriptionsFile = $pluginDir . '/commands/descriptions.json';
 
 $haUrl = '';
 $haToken = '';
 $hasSettings = false;
-if (file_exists($settingsFile)) {
-    $s = json_decode(file_get_contents($settingsFile), true);
+if (file_exists($iniFile)) {
+    $s = parse_ini_file($iniFile);
+    $haUrl = $s['ha_url'] ?? '';
+    $haToken = $s['ha_token'] ?? '';
+    $hasSettings = !empty($haUrl) && !empty($haToken);
+} elseif (file_exists($oldJsonFile)) {
+    $s = json_decode(file_get_contents($oldJsonFile), true);
     $haUrl = $s['ha_url'] ?? '';
     $haToken = $s['ha_token'] ?? '';
     $hasSettings = !empty($haUrl) && !empty($haToken);

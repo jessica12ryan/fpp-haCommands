@@ -9,7 +9,8 @@
  * #############################################################
  */
 $pluginDir = __DIR__;
-$settingsFile = $pluginDir . '/config/ha_settings.json';
+$iniFile = $pluginDir . '/config/plugin.fpp-haCommands';
+$oldJsonFile = $pluginDir . '/config/ha_settings.json';
 $cacheFile = $pluginDir . '/config/entities_cache.json';
 $descriptionsFile = $pluginDir . '/commands/descriptions.json';
 
@@ -21,18 +22,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'save_settings') {
         $haUrl = rtrim($_POST['ha_url'] ?? '', '/');
         $haToken = $_POST['ha_token'] ?? '';
-        file_put_contents($settingsFile, json_encode([
-            'ha_url' => $haUrl,
-            'ha_token' => $haToken
-        ], JSON_PRETTY_PRINT));
+        WriteSettingToFile('ha_url', $haUrl, 'fpp-haCommands');
+        WriteSettingToFile('ha_token', $haToken, 'fpp-haCommands');
+        @unlink($oldJsonFile);
         $settingsSaved = true;
     }
 }
 
-if (file_exists($settingsFile)) {
-    $settings = json_decode(file_get_contents($settingsFile), true);
-    $haUrl = $settings['ha_url'] ?? '';
-    $haToken = $settings['ha_token'] ?? '';
+if (file_exists($iniFile)) {
+    $s = parse_ini_file($iniFile);
+    $haUrl = $s['ha_url'] ?? '';
+    $haToken = $s['ha_token'] ?? '';
+} elseif (file_exists($oldJsonFile)) {
+    $s = json_decode(file_get_contents($oldJsonFile), true);
+    $haUrl = $s['ha_url'] ?? '';
+    $haToken = $s['ha_token'] ?? '';
 }
 
 $entityCount = 0;

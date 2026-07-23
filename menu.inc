@@ -12,19 +12,19 @@
 $hacIconUrl = 'api/plugin/fpp-haCommands/icon?v=' . filemtime(__DIR__ . '/icon.png');
 $menuEntries = Array(
 	Array(
-		'text' => '<img src="' . $hacIconUrl . '" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;"> HA Commands',
+		'text' => '<img src="' . $hacIconUrl . '" width="16" height="16" class="align-middle me-1"> HA Commands',
 		'type' => 'content',
 		'page' => 'config.php',
 		'wrap' => 1
 	),
 	Array(
-		'text' => '<img src="' . $hacIconUrl . '" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;"> HA Commands',
+		'text' => '<img src="' . $hacIconUrl . '" width="16" height="16" class="align-middle me-1"> HA Commands',
 		'type' => 'status',
 		'page' => 'status.php',
 		'wrap' => 1
 	),
 	Array(
-		'text' => '<img src="' . $hacIconUrl . '" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;"> HA Commands',
+		'text' => '<img src="' . $hacIconUrl . '" width="16" height="16" class="align-middle me-1"> HA Commands',
 		'type' => 'help',
 		'page' => 'about.php',
 		'wrap' => 1

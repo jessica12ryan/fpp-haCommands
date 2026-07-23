@@ -10,16 +10,25 @@
 
 <?php
 $pluginDir = dirname(__DIR__);
-$settingsFile = $pluginDir . '/config/ha_settings.json';
+$iniFile = $pluginDir . '/config/plugin.fpp-haCommands';
+$oldJsonFile = $pluginDir . '/config/ha_settings.json';
 
-if (!file_exists($settingsFile)) {
+$haUrl = '';
+$haToken = '';
+if (file_exists($iniFile)) {
+    $s = parse_ini_file($iniFile);
+    $haUrl = rtrim($s['ha_url'] ?? '', '/');
+    $haToken = $s['ha_token'] ?? '';
+} elseif (file_exists($oldJsonFile)) {
+    $s = json_decode(file_get_contents($oldJsonFile), true);
+    $haUrl = rtrim($s['ha_url'] ?? '', '/');
+    $haToken = $s['ha_token'] ?? '';
+}
+
+if (empty($haUrl) || empty($haToken)) {
     fwrite(STDERR, "HA Commands: Settings not configured. Configure HA connection in Content Setup -> HA Commands.\n");
     exit(1);
 }
-
-$settings = json_decode(file_get_contents($settingsFile), true);
-$haUrl = rtrim($settings['ha_url'] ?? '', '/');
-$haToken = $settings['ha_token'] ?? '';
 
 if (empty($haUrl) || empty($haToken)) {
     fwrite(STDERR, "HA Commands: HA URL or Token not configured.\n");

@@ -10,15 +10,20 @@
  */
 
 define('HAC_PLUGIN_DIR', __DIR__);
-define('HAC_SETTINGS_FILE', HAC_PLUGIN_DIR . '/config/ha_settings.json');
+define('HAC_SETTINGS_INI', HAC_PLUGIN_DIR . '/config/plugin.fpp-haCommands');
+define('HAC_SETTINGS_JSON', HAC_PLUGIN_DIR . '/config/ha_settings.json');
 define('HAC_CACHE_FILE', HAC_PLUGIN_DIR . '/config/entities_cache.json');
 define('HAC_DESCRIPTIONS_FILE', HAC_PLUGIN_DIR . '/commands/descriptions.json');
 
 function hacGetSettings() {
-    if (!file_exists(HAC_SETTINGS_FILE)) {
-        return ['ha_url' => '', 'ha_token' => ''];
+    if (file_exists(HAC_SETTINGS_INI)) {
+        $s = parse_ini_file(HAC_SETTINGS_INI);
+        return ['ha_url' => $s['ha_url'] ?? '', 'ha_token' => $s['ha_token'] ?? ''];
     }
-    return json_decode(file_get_contents(HAC_SETTINGS_FILE), true) ?: ['ha_url' => '', 'ha_token' => ''];
+    if (file_exists(HAC_SETTINGS_JSON)) {
+        return json_decode(file_get_contents(HAC_SETTINGS_JSON), true) ?: ['ha_url' => '', 'ha_token' => ''];
+    }
+    return ['ha_url' => '', 'ha_token' => ''];
 }
 
 function hacCallHA($method, $endpoint, $data = null) {
@@ -549,13 +554,9 @@ function hacRefreshEndpoint() {
         $body = $_POST;
 
         if (!empty($body['ha_url']) && !empty($body['ha_token'])) {
-            $r = @file_put_contents(HAC_SETTINGS_FILE, json_encode([
-                'ha_url' => rtrim($body['ha_url'], '/'),
-                'ha_token' => $body['ha_token']
-            ], JSON_PRETTY_PRINT));
-            if ($r === false) {
-                return json(['success' => false, 'error' => 'Could not write settings to ' . HAC_SETTINGS_FILE . '. Check file permissions.']);
-            }
+            WriteSettingToFile('ha_url', rtrim($body['ha_url'], '/'), 'fpp-haCommands');
+            WriteSettingToFile('ha_token', $body['ha_token'], 'fpp-haCommands');
+            @unlink(HAC_SETTINGS_JSON);
         }
 
         $result = hacRefreshAll();
