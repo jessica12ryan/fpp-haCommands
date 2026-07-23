@@ -53,11 +53,6 @@ fi
 # Ensure config directory exists
 mkdir -p "${PLUGIN_DIR}/config" 2>/dev/null || true
 
-# Ensure descriptions.json exists (copy from template if needed)
-if [ ! -f "${PLUGIN_DIR}/commands/descriptions.json" ] && [ -f "${PLUGIN_DIR}/commands/descriptions.template.json" ]; then
-    cp "${PLUGIN_DIR}/commands/descriptions.template.json" "${PLUGIN_DIR}/commands/descriptions.json"
-fi
-
 # Set execute permissions on command scripts
 if [ -d "${PLUGIN_DIR}/commands" ]; then
     chmod +x ${PLUGIN_DIR}/commands/*.php 2>/dev/null || true
