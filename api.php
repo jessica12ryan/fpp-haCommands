@@ -554,8 +554,8 @@ function hacRefreshEndpoint() {
         $body = $_POST;
 
         if (!empty($body['ha_url']) && !empty($body['ha_token'])) {
-            WriteSettingToFile('ha_url', rtrim($body['ha_url'], '/'), 'fpp-haCommands');
-            WriteSettingToFile('ha_token', $body['ha_token'], 'fpp-haCommands');
+            $ini = "ha_url=" . rtrim($body['ha_url'], '/') . "\nha_token=" . $body['ha_token'] . "\n";
+            @file_put_contents(HAC_SETTINGS_INI, $ini);
             @unlink(HAC_SETTINGS_JSON);
         }
 

@@ -22,8 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'save_settings') {
         $haUrl = rtrim($_POST['ha_url'] ?? '', '/');
         $haToken = $_POST['ha_token'] ?? '';
-        WriteSettingToFile('ha_url', $haUrl, 'fpp-haCommands');
-        WriteSettingToFile('ha_token', $haToken, 'fpp-haCommands');
+        $ini = "ha_url=" . $haUrl . "\nha_token=" . $haToken . "\n";
+        file_put_contents($iniFile, $ini);
         @unlink($oldJsonFile);
         $settingsSaved = true;
     }
