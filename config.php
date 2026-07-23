@@ -278,7 +278,7 @@ $(document).ready(function() {
         <div class="p-3">
             <ul>
                 <li>Generate a <b>Long-Lived Access Token</b> in Home Assistant at your Profile page (<i>http://HA:8123/profile</i> -> Long-Lived Access Tokens)</li>
-                <li>After clicking <b>Update Entities</b>, the FPP daemon will restart to load the new commands. This is a fast restart. You may need to refresh the page for new commands to appear in the FPP command list.</li>
+                <li>After clicking <b>Update Entities</b>, the FPP daemon will prompt for restart to load the new commands. You may need to refresh the page after restarting FPPd for new commands to appear in the FPP command list.</li>
                 <li>HA URL should include the protocol and port, e.g., <code>http://192.168.1.100:8123</code></li>
                 <li>Commands appear in the playlist editor as <b>HA - domain._name</b> with a dropdown of matching entities.</li>
             </ul>
