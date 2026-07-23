@@ -1,0 +1,112 @@
+[
+  {
+    "name": "HA - light.turn_on",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "light", "type": "string", "contents": ["light"]},
+      {"name": "service", "default": "turn_on", "type": "string", "contents": ["turn_on"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "brightness_pct", "description": "Brightness %", "type": "int", "optional": true},
+      {"name": "rgb_color", "description": "RGB Color (r,g,b)", "type": "string", "optional": true},
+      {"name": "color_temp", "description": "Color Temp (mireds)", "type": "int", "optional": true},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - light.turn_off",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "light", "type": "string", "contents": ["light"]},
+      {"name": "service", "default": "turn_off", "type": "string", "contents": ["turn_off"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - switch.turn_on",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "switch", "type": "string", "contents": ["switch"]},
+      {"name": "service", "default": "turn_on", "type": "string", "contents": ["turn_on"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - switch.turn_off",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "switch", "type": "string", "contents": ["switch"]},
+      {"name": "service", "default": "turn_off", "type": "string", "contents": ["turn_off"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - cover.open_cover",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "cover", "type": "string", "contents": ["cover"]},
+      {"name": "service", "default": "open_cover", "type": "string", "contents": ["open_cover"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - cover.close_cover",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "cover", "type": "string", "contents": ["cover"]},
+      {"name": "service", "default": "close_cover", "type": "string", "contents": ["close_cover"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - lock.lock",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "lock", "type": "string", "contents": ["lock"]},
+      {"name": "service", "default": "lock", "type": "string", "contents": ["lock"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - lock.unlock",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "lock", "type": "string", "contents": ["lock"]},
+      {"name": "service", "default": "unlock", "type": "string", "contents": ["unlock"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - input_boolean.turn_on",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "input_boolean", "type": "string", "contents": ["input_boolean"]},
+      {"name": "service", "default": "turn_on", "type": "string", "contents": ["turn_on"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - input_boolean.turn_off",
+    "script": "call_action.php",
+    "args": [
+      {"name": "domain", "default": "input_boolean", "type": "string", "contents": ["input_boolean"]},
+      {"name": "service", "default": "turn_off", "type": "string", "contents": ["turn_off"]},
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []},
+      {"name": "service_data", "description": "Extra JSON", "type": "string", "optional": true}
+    ]
+  },
+  {
+    "name": "HA - Get State",
+    "script": "get_state.php",
+    "args": [
+      {"name": "entity_id", "description": "Entity", "type": "string", "contents": []}
+    ]
+  }
+]

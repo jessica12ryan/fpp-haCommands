@@ -1,0 +1,5 @@
+.DS_Store
+*.log
+/config/ha_settings.json
+/config/entities_cache.json
+/commands/descriptions.json

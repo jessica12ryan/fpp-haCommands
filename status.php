@@ -1,0 +1,126 @@
+<?php
+/**
+ * #############################################################
+ * ## Home Assistant Commands Plugin for FPP (fpp-haCommands) ##
+ * ## Author: jessica12ryan                                   ##
+ * ## URL: https://github.com/jessica12ryan/fpp-haCommands    ##
+ * #############################################################
+ * ## status.php                                              ##
+ * #############################################################
+ */
+$pluginDir = __DIR__;
+$settingsFile = $pluginDir . '/config/ha_settings.json';
+$cacheFile = $pluginDir . '/config/entities_cache.json';
+$descriptionsFile = $pluginDir . '/commands/descriptions.json';
+
+$haUrl = '';
+$haToken = '';
+$hasSettings = false;
+if (file_exists($settingsFile)) {
+    $s = json_decode(file_get_contents($settingsFile), true);
+    $haUrl = $s['ha_url'] ?? '';
+    $haToken = $s['ha_token'] ?? '';
+    $hasSettings = !empty($haUrl) && !empty($haToken);
+}
+
+$cacheStats = ['updated_at' => 'Never', 'entities' => 0, 'domains' => 0];
+if (file_exists($cacheFile)) {
+    $c = json_decode(file_get_contents($cacheFile), true);
+    $cacheStats['updated_at'] = $c['updated_at'] ?? 'Never';
+    $cacheStats['entities'] = count($c['entities'] ?? []);
+    $cacheStats['domains'] = count($c['entities_by_domain'] ?? []);
+}
+
+$cmdCount = 0;
+$entityCmdCount = 0;
+if (file_exists($descriptionsFile)) {
+    $cmds = json_decode(file_get_contents($descriptionsFile), true);
+    $cmdCount = count($cmds ?? []);
+    foreach ($cmds as $cmd) {
+        foreach ($cmd['args'] as $arg) {
+            if (($arg['name'] ?? '') === 'entity_id' && !empty($arg['contents'])) {
+                $entityCmdCount++;
+                break;
+            }
+        }
+    }
+}
+?>
+<div style="margin:0 auto;">
+    <fieldset class="border p-3">
+        <legend>HA Commands Status</legend>
+        <div class="p-3">
+            <table>
+                <tr>
+                    <td style="padding: 4px;"><b>Connection:</b></td>
+                    <td style="padding: 4px;">
+                        <?php if ($hasSettings): ?>
+                            <span class="text-success">&#9679; Configured</span>
+                        <?php else: ?>
+                            <span class="text-danger">&#9679; Not configured</span>
+                            &nbsp;<a href="plugin.php?plugin=fpp-haCommands&page=config.php">Configure now</a>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php if ($hasSettings): ?>
+                <tr>
+                    <td style="padding: 4px;"><b>HA URL:</b></td>
+                    <td style="padding: 4px;"><?php echo htmlspecialchars($haUrl); ?></td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px;"><b>Cache updated:</b></td>
+                    <td style="padding: 4px;"><?php echo htmlspecialchars($cacheStats['updated_at']); ?></td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px;"><b>Entities cached:</b></td>
+                    <td style="padding: 4px;"><?php echo $cacheStats['entities']; ?></td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px;"><b>Domains discovered:</b></td>
+                    <td style="padding: 4px;"><?php echo $cacheStats['domains']; ?></td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px;"><b>Commands (with entities):</b></td>
+                    <td style="padding: 4px;"><?php echo $entityCmdCount; ?> / <?php echo $cmdCount; ?> total</td>
+                </tr>
+                <?php endif; ?>
+            </table>
+
+            <?php if ($cmdCount > 0): ?>
+            <hr>
+            <p><b>Generated Commands:</b></p>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <table class="fppTable" style="width: auto;">
+                    <thead>
+                        <tr><th>Command Name</th><th>Entity Dropdown</th></tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $cmds = json_decode(file_get_contents($descriptionsFile), true);
+                        usort($cmds, function($a, $b) {
+                            return strcasecmp($a['name'] ?? '', $b['name'] ?? '');
+                        });
+                        foreach ($cmds as $cmd):
+                            $name = htmlspecialchars($cmd['name']);
+                            $hasEntityDropdown = false;
+                            $entityDomain = '';
+                            foreach ($cmd['args'] as $arg) {
+                                if (($arg['name'] ?? '') === 'entity_id' && !empty($arg['contents'])) {
+                                    $hasEntityDropdown = true;
+                                    $entityDomain = count($arg['contents']) . ' entities';
+                                }
+                            }
+                            if (!$hasEntityDropdown) continue;
+                        ?>
+                        <tr>
+                            <td><?php echo $name; ?></td>
+                            <td><?php echo $hasEntityDropdown ? htmlspecialchars($entityDomain) : '<span class="text-secondary">No entity</span>'; ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+        </div>
+    </fieldset>
+</div>

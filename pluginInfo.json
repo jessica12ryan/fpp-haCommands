@@ -1,0 +1,48 @@
+{
+	"repoName": "fpp-haCommands",
+	"name": "Home Assistant Commands Plugin for FPP",
+	"author": "jessica12ryan",
+	"description": "Integrates Home Assistant entities and actions into FPP as commands. Configure your HA connection, discover entities, and control lights, switches, covers, and more directly from FPP commands, scheduler, playlists, GPIO's, and xLights Sequences.",
+	"homeURL": "https://github.com/jessica12ryan/fpp-haCommands",
+	"srcURL": "https://github.com/jessica12ryan/fpp-haCommands.git",
+	"bugURL": "https://github.com/jessica12ryan/fpp-haCommands/issues",
+	"iconURL": "https://raw.githubusercontent.com/jessica12ryan/fpp-haCommands/main/icon.png",
+	"versions": [
+		{
+			"minFPPVersion": "8.0",
+			"maxFPPVersion": "8.999",
+			"branch": "main",
+			"sha": "",
+			"allowUpdates": 1,
+			"dependencies": {
+				"plugins": [],
+				"packages": ["php-curl"],
+				"scripts": []
+			}
+		},
+		{
+			"minFPPVersion": "9.0",
+			"maxFPPVersion": "9.999",
+			"branch": "main",
+			"sha": "",
+			"allowUpdates": 1,
+			"dependencies": {
+				"plugins": [],
+				"packages": ["php-curl"],
+				"scripts": []
+			}
+		},
+		{
+			"minFPPVersion": "10.0",
+			"maxFPPVersion": "0",
+			"branch": "main",
+			"sha": "",
+			"allowUpdates": 1,
+			"dependencies": {
+				"plugins": [],
+				"packages": ["php-curl"],
+				"scripts": []
+			}
+		}
+	]
+}
