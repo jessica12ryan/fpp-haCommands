@@ -1,5 +1,6 @@
 .DS_Store
 *.log
 /config/ha_settings.json
+/config/plugin.fpp-haCommands
 /config/entities_cache.json
 /commands/descriptions.json

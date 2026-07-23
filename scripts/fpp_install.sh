@@ -18,8 +18,14 @@ fi
 if [ -f "${PLUGIN_DIR}/config/ha_settings.json" ]; then
     cp "${PLUGIN_DIR}/config/ha_settings.json" "/tmp/ha_settings_backup.json" 2>/dev/null || true
 fi
+if [ -f "${PLUGIN_DIR}/config/plugin.fpp-haCommands" ]; then
+    cp "${PLUGIN_DIR}/config/plugin.fpp-haCommands" "/tmp/plugin_fpp_haCommands_backup" 2>/dev/null || true
+fi
 if [ -f "${PLUGIN_DIR}/config/entities_cache.json" ]; then
     cp "${PLUGIN_DIR}/config/entities_cache.json" "/tmp/entities_cache_backup.json" 2>/dev/null || true
+fi
+if [ -f "${PLUGIN_DIR}/commands/descriptions.json" ]; then
+    cp "${PLUGIN_DIR}/commands/descriptions.json" "/tmp/descriptions_backup.json" 2>/dev/null || true
 fi
 
 if [ -d "${PLUGIN_DIR}/.git" ]; then
@@ -45,9 +51,17 @@ if [ -f "/tmp/ha_settings_backup.json" ]; then
     mkdir -p "${PLUGIN_DIR}/config" 2>/dev/null || true
     mv "/tmp/ha_settings_backup.json" "${PLUGIN_DIR}/config/ha_settings.json" 2>/dev/null || true
 fi
+if [ -f "/tmp/plugin_fpp_haCommands_backup" ]; then
+    mkdir -p "${PLUGIN_DIR}/config" 2>/dev/null || true
+    mv "/tmp/plugin_fpp_haCommands_backup" "${PLUGIN_DIR}/config/plugin.fpp-haCommands" 2>/dev/null || true
+fi
 if [ -f "/tmp/entities_cache_backup.json" ]; then
     mkdir -p "${PLUGIN_DIR}/config" 2>/dev/null || true
     mv "/tmp/entities_cache_backup.json" "${PLUGIN_DIR}/config/entities_cache.json" 2>/dev/null || true
+fi
+if [ -f "/tmp/descriptions_backup.json" ]; then
+    mkdir -p "${PLUGIN_DIR}/commands" 2>/dev/null || true
+    mv "/tmp/descriptions_backup.json" "${PLUGIN_DIR}/commands/descriptions.json" 2>/dev/null || true
 fi
 
 # Ensure config directory exists
@@ -62,10 +76,10 @@ fi
 # (must run AFTER all files are created, so globs match)
 if chown -R fpp:fpp "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" 2>/dev/null || chown -R :fpp "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" 2>/dev/null; then
     chmod 775 "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" 2>/dev/null || true
-    chmod 664 "${PLUGIN_DIR}/config"/*.json "${PLUGIN_DIR}/commands"/*.json 2>/dev/null || true
+    find "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" -type f -exec chmod 664 {} + 2>/dev/null || true
 else
     chmod 775 "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" 2>/dev/null || true
-    chmod 664 "${PLUGIN_DIR}/config"/*.json "${PLUGIN_DIR}/commands"/*.json 2>/dev/null || true
+    find "${PLUGIN_DIR}/config" "${PLUGIN_DIR}/commands" -type f -exec chmod 664 {} + 2>/dev/null || true
 fi
 
 echo "fpp-haCommands: Plugin installed successfully."
