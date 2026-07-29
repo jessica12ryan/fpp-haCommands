@@ -67,6 +67,21 @@ $showDevTab = $uiLevel >= 3;
 </div>
 
     <fieldset class="border p-3" style="margin-top:16px;">
+        <legend>Updates</legend>
+        <div class="p-3">
+            <p>
+                Check whether the plugin is up to date with the latest version on GitHub.
+            </p>
+            <div style="display:flex; gap:10px; align-items:start;">
+                <div>
+                    <button type="button" class="btn-info" id="check_updates_btn" onclick="haDev.checkUpdates();">&#8635; Check for Updates</button>
+                </div>
+                <div id="update_result"></div>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="border p-3" style="margin-top:16px;">
         <legend>Plugin Management</legend>
         <div class="p-3">
             <p>
@@ -165,6 +180,32 @@ var haDev = {
                 }
             });
         }, 'modal-btn-primary');
+    },
+    checkUpdates: function() {
+        $('#check_updates_btn').prop('disabled', true);
+        $('#update_result').html('<span style="color:#6c757d;">Checking...</span>');
+        $.ajax({
+            url: 'api/plugin/fpp-haCommands/check-updates',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                $('#check_updates_btn').prop('disabled', false);
+                if (data.updateAvailable) {
+                    $('#update_result').html('<span style="color:#e67e22;font-weight:600;">&#9888; Update available!</span><br><span style="color:#6c757d;font-size:13px;">Local: ' + data.localSha + '<br>Remote: ' + data.remoteSha + '<br><a href="https://github.com/jessica12ryan/fpp-haCommands" target="_blank">View on GitHub</a></span>');
+                } else {
+                    $('#update_result').html('<span style="color:#28a745;font-weight:600;">&#10003; Plugin is up to date</span><br><span style="color:#6c757d;font-size:13px;">' + data.localSha + '</span>');
+                }
+            },
+            error: function(xhr) {
+                $('#check_updates_btn').prop('disabled', false);
+                var msg = 'Could not reach the plugin API.';
+                try {
+                    var resp = JSON.parse(xhr.responseText);
+                    if (resp.error) msg = resp.error;
+                } catch(e) {}
+                $('#update_result').html('<span style="color:#dc3545;">' + msg + '</span>');
+            }
+        });
     },
     reinstall: function() {
         haDev.showConfirm('This will reinstall the plugin. Your configuration will be preserved. Are you sure?', function() {

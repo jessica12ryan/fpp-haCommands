@@ -446,6 +446,7 @@ function getEndpointsfpphaCommands() {
     $result[] = ['method' => 'POST', 'endpoint' => 'restart-fppd', 'callback' => 'hacRestartFPPDEndpoint'];
     $result[] = ['method' => 'POST', 'endpoint' => 'reinstall', 'callback' => 'hacReinstallEndpoint'];
     $result[] = ['method' => 'POST', 'endpoint' => 'uninstall', 'callback' => 'hacUninstallEndpoint'];
+    $result[] = ['method' => 'GET', 'endpoint' => 'check-updates', 'callback' => 'hacCheckUpdatesEndpoint'];
 
     return $result;
 }
@@ -710,6 +711,29 @@ function hacRestartFPPDEndpoint() {
     }
 
     return json(['success' => true, 'message' => 'FPPD restart flag has been set.']);
+}
+
+function hacCheckUpdatesEndpoint() {
+    $pluginDir = HAC_PLUGIN_DIR;
+    $localSha = '';
+    $remoteSha = '';
+
+    if (is_dir($pluginDir . '/.git')) {
+        $localSha = trim(@shell_exec('git -C ' . escapeshellarg($pluginDir) . ' rev-parse HEAD 2>/dev/null') ?? '');
+        $remoteRef = trim(@shell_exec('git -C ' . escapeshellarg($pluginDir) . ' ls-remote origin main 2>/dev/null') ?? '');
+        if (!empty($remoteRef)) {
+            $parts = preg_split('/\s+/', $remoteRef);
+            $remoteSha = $parts[0] ?? '';
+        }
+    }
+
+    $updateAvailable = !empty($localSha) && !empty($remoteSha) && $localSha !== $remoteSha;
+
+    return json([
+        'updateAvailable' => $updateAvailable,
+        'localSha' => !empty($localSha) ? substr($localSha, 0, 7) : 'unknown',
+        'remoteSha' => !empty($remoteSha) ? substr($remoteSha, 0, 7) : 'unknown',
+    ]);
 }
 
 function hacReinstallEndpoint() {
