@@ -777,6 +777,12 @@ function hacUpdateEndpoint() {
 
     @chmod($pluginDir . '/config', 0775);
     @chmod($pluginDir . '/commands', 0775);
+    foreach (glob($pluginDir . '/config/*') as $f) {
+        @chmod($f, 0664);
+    }
+    foreach (glob($pluginDir . '/commands/*') as $f) {
+        @chmod($f, 0664);
+    }
     foreach (glob($pluginDir . '/commands/*.php') as $cmd) {
         @chmod($cmd, 0755);
     }
@@ -843,6 +849,12 @@ function hacReinstallEndpoint() {
 
     @chmod($pluginDir . '/config', 0775);
     @chmod($pluginDir . '/commands', 0775);
+    foreach (glob($pluginDir . '/config/*') as $f) {
+        @chmod($f, 0664);
+    }
+    foreach (glob($pluginDir . '/commands/*') as $f) {
+        @chmod($f, 0664);
+    }
     foreach (glob($pluginDir . '/commands/*.php') as $cmd) {
         @chmod($cmd, 0755);
     }
