@@ -12,6 +12,13 @@
 $pluginDir = dirname(__DIR__);
 $iniFile = $pluginDir . '/config/plugin.fpp-haCommands';
 $oldJsonFile = $pluginDir . '/config/ha_settings.json';
+$logDir = getenv('LOGDIR') ?: '/home/fpp/media/logs';
+$logFile = $logDir . '/plugin-fpp-haCommands.log';
+
+function hacLog($msg) {
+    global $logFile;
+    file_put_contents($logFile, date('Y-m-d H:i:s') . ' fpp-haCommands get_state: ' . $msg . "\n", FILE_APPEND | LOCK_EX);
+}
 
 $haUrl = '';
 $haToken = '';
@@ -26,20 +33,21 @@ if (file_exists($iniFile)) {
 }
 
 if (empty($haUrl) || empty($haToken)) {
-    fwrite(STDERR, "HA Commands: Settings not configured. Configure HA connection in Content Setup -> HA Commands.\n");
-    exit(1);
-}
-
-if (empty($haUrl) || empty($haToken)) {
-    fwrite(STDERR, "HA Commands: HA URL or Token not configured.\n");
+    $msg = "HA URL or Token not configured.\n";
+    hacLog($msg);
+    fwrite(STDERR, "HA Commands: " . $msg);
     exit(1);
 }
 
 $entityId = $argv[1] ?? '';
 if (empty($entityId)) {
-    fwrite(STDERR, "HA Commands: Missing entity_id argument.\n");
+    $msg = "Missing entity_id argument.\n";
+    hacLog($msg);
+    fwrite(STDERR, "HA Commands: " . $msg);
     exit(1);
 }
+
+hacLog("GET state entity=$entityId");
 
 $url = $haUrl . '/api/states/' . urlencode($entityId);
 
@@ -55,13 +63,17 @@ $error = curl_error($ch);
 curl_close($ch);
 
 if ($error) {
-    fwrite(STDERR, "HA Commands: Curl error - " . $error . "\n");
+    $msg = "Curl error - " . $error . "\n";
+    hacLog($msg);
+    fwrite(STDERR, "HA Commands: " . $msg);
     exit(1);
 }
 
 if ($httpCode === 200) {
     $state = json_decode($response, true);
-    echo "State: " . ($state['state'] ?? 'unknown') . "\n";
+    $stateVal = $state['state'] ?? 'unknown';
+    hacLog("SUCCESS: Got state for $entityId: $stateVal");
+    echo "State: " . $stateVal . "\n";
     if (!empty($state['attributes'])) {
         foreach ($state['attributes'] as $key => $value) {
             if (is_scalar($value)) {
@@ -71,9 +83,13 @@ if ($httpCode === 200) {
     }
     exit(0);
 } elseif ($httpCode === 404) {
-    fwrite(STDERR, "HA Commands: Entity '" . $entityId . "' not found in Home Assistant.\n");
+    $msg = "Entity '$entityId' not found in Home Assistant.\n";
+    hacLog($msg);
+    fwrite(STDERR, "HA Commands: " . $msg);
     exit(1);
 } else {
-    fwrite(STDERR, "HA Commands: HTTP " . $httpCode . " - " . substr($response, 0, 500) . "\n");
+    $msg = "HTTP " . $httpCode . " - " . substr($response, 0, 500) . "\n";
+    hacLog($msg);
+    fwrite(STDERR, "HA Commands: " . $msg);
     exit(1);
 }

@@ -14,6 +14,12 @@ define('HAC_SETTINGS_INI', HAC_PLUGIN_DIR . '/config/plugin.fpp-haCommands');
 define('HAC_SETTINGS_JSON', HAC_PLUGIN_DIR . '/config/ha_settings.json');
 define('HAC_CACHE_FILE', HAC_PLUGIN_DIR . '/config/entities_cache.json');
 define('HAC_DESCRIPTIONS_FILE', HAC_PLUGIN_DIR . '/commands/descriptions.json');
+define('HAC_LOG_DIR', getenv('LOGDIR') ?: '/home/fpp/media/logs');
+define('HAC_LOG_FILE', HAC_LOG_DIR . '/plugin-fpp-haCommands.log');
+
+function hacLog($msg) {
+    file_put_contents(HAC_LOG_FILE, date('Y-m-d H:i:s') . ' fpp-haCommands api: ' . $msg . "\n", FILE_APPEND | LOCK_EX);
+}
 
 function hacGetSettings() {
     if (file_exists(HAC_SETTINGS_INI)) {
@@ -434,6 +440,9 @@ function getEndpointsfpphaCommands() {
     $result[] = ['method' => 'POST', 'endpoint' => 'test', 'callback' => 'hacTestEndpoint'];
     $result[] = ['method' => 'POST', 'endpoint' => 'refresh', 'callback' => 'hacRefreshEndpoint'];
     $result[] = ['method' => 'GET', 'endpoint' => 'icon', 'callback' => 'hacIconEndpoint'];
+    $result[] = ['method' => 'GET', 'endpoint' => 'logs', 'callback' => 'hacLogsEndpoint'];
+    $result[] = ['method' => 'POST', 'endpoint' => 'reset', 'callback' => 'hacResetEndpoint'];
+    $result[] = ['method' => 'POST', 'endpoint' => 'restart-fppd', 'callback' => 'hacRestartFPPDEndpoint'];
 
     return $result;
 }
@@ -488,6 +497,8 @@ function hacTestEndpoint() {
         return json(['success' => false, 'error' => 'Please enter both the HA URL and your access token.']);
     }
 
+    hacLog('Test connection to ' . $url);
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url . '/api/');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -525,6 +536,7 @@ function hacTestEndpoint() {
     $decoded = json_decode($response, true);
     $version = $decoded['message'] ?? '';
 
+    hacLog('Test connection SUCCESS: ' . $url . ' (v' . $version . ')');
     return json([
         'success' => true,
         'version' => $version,
@@ -560,14 +572,115 @@ function hacRefreshEndpoint() {
         }
 
         $result = hacRefreshAll();
+        if ($result['success']) {
+            hacLog('Refresh completed: ' . ($result['stats']['commands'] ?? 0) . ' commands generated');
+        } else {
+            hacLog('Refresh failed: ' . ($result['error'] ?? 'Unknown error'));
+        }
         return json($result);
     } catch (Throwable $e) {
+        $err = hacFriendlyError($e->getMessage());
+        hacLog('Refresh error: ' . $err);
         return json([
             'success' => false,
-            'error' => hacFriendlyError($e->getMessage())
+            'error' => $err
         ]);
     } finally {
         restore_error_handler();
     }
+}
+
+function hacLogsEndpoint() {
+    $logFile = HAC_LOG_FILE;
+    $lines = [];
+
+    if (!file_exists($logFile)) {
+        return json(['success' => true, 'entries' => []]);
+    }
+
+    $fileLines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($fileLines === false) {
+        return json(['success' => false, 'error' => 'Could not read log file.']);
+    }
+
+    $fileLines = array_slice($fileLines, -50);
+
+    foreach ($fileLines as $line) {
+        if (preg_match('/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (fpp-haCommands) (\S+): (.*)$/', $line, $m)) {
+            $timestamp = $m[1];
+            $source = $m[3];
+            $message = $m[4];
+            $level = 'INFO';
+            if (preg_match('/^(SUCCESS|ERROR|WARNING)/', $message, $lm)) {
+                $level = $lm[1];
+            } elseif (preg_match('/^(Curl error|HTTP [45])/', $message)) {
+                $level = 'ERROR';
+            }
+            $lines[] = [
+                'timestamp' => $timestamp,
+                'source' => $source,
+                'level' => $level,
+                'message' => $message
+            ];
+        } else {
+            $lines[] = [
+                'timestamp' => '',
+                'source' => '',
+                'level' => 'INFO',
+                'message' => $line
+            ];
+        }
+    }
+
+    return json(['success' => true, 'entries' => array_reverse($lines)]);
+}
+
+function hacResetEndpoint() {
+    $result = ['success' => true, 'message' => 'Plugin has been reset to factory defaults.', 'restart_prompt' => true];
+
+    $cleared = [];
+
+    if (file_exists(HAC_SETTINGS_INI)) {
+        $ini = "ha_url=\nha_token=\n";
+        if (file_put_contents(HAC_SETTINGS_INI, $ini) !== false) {
+            $cleared[] = 'settings';
+        }
+    }
+
+    if (file_exists(HAC_SETTINGS_JSON)) {
+        if (@unlink(HAC_SETTINGS_JSON)) {
+            $cleared[] = 'legacy_settings';
+        }
+    }
+
+    if (file_exists(HAC_CACHE_FILE)) {
+        if (@unlink(HAC_CACHE_FILE)) {
+            $cleared[] = 'entity_cache';
+        }
+    }
+
+    if (file_exists(HAC_DESCRIPTIONS_FILE)) {
+        if (@unlink(HAC_DESCRIPTIONS_FILE)) {
+            $cleared[] = 'command_descriptions';
+        }
+    }
+
+    $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
+    @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
+
+    hacLog('Plugin reset: ' . implode(', ', $cleared));
+
+    return json($result);
+}
+
+function hacRestartFPPDEndpoint() {
+    $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
+    $result = @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
+
+    if ($result === false) {
+        return json(['success' => false, 'error' => 'Could not set restart flag. You may need to restart FPPD manually.']);
+    }
+
+    return json(['success' => true, 'message' => 'FPPD restart flag has been set.']);
 }
 ?>

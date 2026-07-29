@@ -8,6 +8,9 @@
  * ## help.php                                                ##
  * #############################################################
  */
+$uiLevel = (int)($settings['uiLevel'] ?? 0);
+$showLogsTab = $uiLevel >= 1;
+$showDevTab = $uiLevel >= 3;
 ?>
 <style>
 .tab-bar { display: flex; gap: 0; margin-bottom: 12px; border-bottom: 2px solid var(--bs-border-color, #dee2e6); }
@@ -21,6 +24,12 @@
     <a href="plugin.php?plugin=fpp-haCommands&page=config.php" class="<?php echo basename(__FILE__) === 'config.php' ? 'active' : ''; ?>">&#9881; Config</a>
     <a href="plugin.php?plugin=fpp-haCommands&page=help.php" class="<?php echo basename(__FILE__) === 'help.php' ? 'active' : ''; ?>">&#63; Help</a>
     <a href="plugin.php?plugin=fpp-haCommands&page=about.php" class="<?php echo basename(__FILE__) === 'about.php' ? 'active' : ''; ?>">&#9432; About</a>
+    <?php if ($showLogsTab): ?>
+    <a href="plugin.php?plugin=fpp-haCommands&page=logs.php" class="<?php echo basename(__FILE__) === 'logs.php' ? 'active' : ''; ?>">&#9776; Logs</a>
+    <?php endif; ?>
+    <?php if ($showDevTab): ?>
+    <a href="plugin.php?plugin=fpp-haCommands&page=developer.php" class="<?php echo basename(__FILE__) === 'developer.php' ? 'active' : ''; ?>">&#9881; Developer</a>
+    <?php endif; ?>
 </div>
 
 <div style="margin:0 auto;">
