@@ -52,23 +52,7 @@ $showDevTab = $uiLevel >= 3;
         <legend>Developer Tools</legend>
         <div class="p-3">
 
-            <h3 style="color:#dc3545;">Reset</h3>
-            <p>
-                Reset cached entities and generated commands, or perform a full factory reset that also
-                clears the HA URL and Long-Lived Access Token. FPPD will be prompted to restart
-                after either action.
-            </p>
-            <div style="display:flex; gap:10px;">
-                <button type="button" class="btn-warning" id="reset_cache_btn" onclick="haDev.resetCache();">&#9888; Reset Cached Entities</button>
-                <button type="button" class="btn-danger" id="reset_btn" onclick="haDev.reset();">&#9888; Reset Everything</button>
-            </div>
-        </div>
-    </fieldset>
-</div>
-
-    <fieldset class="border p-3" style="margin-top:16px;">
-        <legend>Updates</legend>
-        <div class="p-3">
+            <h3 style="color:#0d6efd;">Updates</h3>
             <p>
                 Check whether the plugin is up to date with the latest version on GitHub.
             </p>
@@ -78,18 +62,29 @@ $showDevTab = $uiLevel >= 3;
                 </div>
                 <div id="update_result"></div>
             </div>
-        </div>
-    </fieldset>
 
-    <fieldset class="border p-3" style="margin-top:16px;">
-        <legend>Plugin Management</legend>
-        <div class="p-3">
+            <hr style="margin:20px 0;">
+
+            <h3 style="color:#e67e22;">Plugin Management</h3>
             <p>
                 Reinstall the plugin to apply file updates, or uninstall it from the system.
             </p>
             <div style="display:flex; gap:10px;">
-                <button type="button" class="btn-info" id="reinstall_btn" onclick="haDev.reinstall();">&#8635; Reinstall Plugin</button>
+                <button type="button" class="btn-warning" id="reinstall_btn" onclick="haDev.reinstall();">&#9888; Reinstall Plugin</button>
                 <button type="button" class="btn-danger" id="uninstall_btn" onclick="haDev.uninstall();">&#9888; Uninstall Plugin</button>
+            </div>
+
+            <hr style="margin:20px 0;">
+
+            <h3 style="color:#dc3545;">Reset</h3>
+            <p>
+                Reset cached entities and generated commands, or perform a full factory reset that also
+                clears the HA URL and Long-Lived Access Token. FPPD will be prompted to restart
+                after either action.
+            </p>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="btn-warning" id="reset_cache_btn" onclick="haDev.resetCache();">&#9888; Reset Cached Entities</button>
+                <button type="button" class="btn-danger" id="reset_btn" onclick="haDev.reset();">&#9888; Reset Everything</button>
             </div>
         </div>
     </fieldset>
@@ -252,7 +247,7 @@ var haDev = {
                     haDev.showAlert(msg);
                 }
             });
-        }, 'modal-btn-info');
+        }, 'modal-btn-warning');
     },
     uninstall: function() {
         haDev.showConfirm('This will completely remove the plugin and all its files. Configuration will be lost. FPPD will be prompted to restart. Are you sure?', function() {
