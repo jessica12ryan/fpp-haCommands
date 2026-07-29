@@ -182,22 +182,23 @@ var haDev = {
         }, 'modal-btn-primary');
     },
     checkUpdates: function() {
-        $('#check_updates_btn').prop('disabled', true);
+        $('#check_updates_btn').html('&#8635; Check for Updates').prop('disabled', true).attr('onclick', 'haDev.checkUpdates();');
         $('#update_result').html('<span style="color:#6c757d;">Checking...</span>');
         $.ajax({
             url: 'api/plugin/fpp-haCommands/check-updates',
             type: 'GET',
             dataType: 'json',
             success: function(data) {
-                $('#check_updates_btn').prop('disabled', false);
                 if (data.updateAvailable) {
+                    $('#check_updates_btn').html('&#8635; Install Updates').prop('disabled', false).attr('onclick', 'haDev.installUpdates();');
                     $('#update_result').html('<span style="color:#e67e22;font-weight:600;">&#9888; Update available!</span><br><span style="color:#6c757d;font-size:13px;">Local: ' + data.localSha + '<br>Remote: ' + data.remoteSha + '<br><a href="https://github.com/jessica12ryan/fpp-haCommands" target="_blank">View on GitHub</a></span>');
                 } else {
+                    $('#check_updates_btn').html('&#8635; Check for Updates').prop('disabled', false).attr('onclick', 'haDev.checkUpdates();');
                     $('#update_result').html('<span style="color:#28a745;font-weight:600;">&#10003; Plugin is up to date</span><br><span style="color:#6c757d;font-size:13px;">' + data.localSha + '</span>');
                 }
             },
             error: function(xhr) {
-                $('#check_updates_btn').prop('disabled', false);
+                $('#check_updates_btn').html('&#8635; Check for Updates').prop('disabled', false).attr('onclick', 'haDev.checkUpdates();');
                 var msg = 'Could not reach the plugin API.';
                 try {
                     var resp = JSON.parse(xhr.responseText);
@@ -206,6 +207,29 @@ var haDev = {
                 $('#update_result').html('<span style="color:#dc3545;">' + msg + '</span>');
             }
         });
+    },
+    installUpdates: function() {
+        haDev.showConfirm('This will update the plugin to the latest version from GitHub. Your configuration will be preserved. Are you sure?', function() {
+            $('#check_updates_btn').prop('disabled', true);
+            $.ajax({
+                url: 'api/plugin/fpp-haCommands/reinstall',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function() {
+                    location.reload();
+                },
+                error: function(xhr) {
+                    var msg = 'Could not reach the plugin API.';
+                    try {
+                        var resp = JSON.parse(xhr.responseText);
+                        if (resp.error) msg = resp.error;
+                    } catch(e) {}
+                    $('#check_updates_btn').prop('disabled', false);
+                    haDev.showAlert(msg);
+                }
+            });
+        }, 'modal-btn-info');
     },
     reinstall: function() {
         haDev.showConfirm('This will reinstall the plugin. Your configuration will be preserved. Are you sure?', function() {

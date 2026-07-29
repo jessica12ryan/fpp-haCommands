@@ -780,6 +780,20 @@ function hacReinstallEndpoint() {
         @chmod($cmd, 0755);
     }
 
+    $pluginInfoFile = $pluginDir . '/pluginInfo.json';
+    if (file_exists($pluginInfoFile)) {
+        $info = json_decode(file_get_contents($pluginInfoFile), true);
+        if ($info && isset($info['versions'])) {
+            $sha = trim(@shell_exec('git -C ' . escapeshellarg($pluginDir) . ' rev-parse HEAD 2>/dev/null') ?? '');
+            if (!empty($sha)) {
+                foreach ($info['versions'] as &$v) {
+                    $v['sha'] = $sha;
+                }
+                file_put_contents($pluginInfoFile, json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+            }
+        }
+    }
+
     $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
     @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
 
