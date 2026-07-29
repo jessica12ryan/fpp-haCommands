@@ -5,7 +5,7 @@
  * ## Author: jessica12ryan                                   ##
  * ## URL: https://github.com/jessica12ryan/fpp-haCommands    ##
  * #############################################################
- * ## help.php                                                ##
+ * ## help.php                                               ##
  * #############################################################
  */
 $uiLevel = (int)($settings['uiLevel'] ?? 0);
