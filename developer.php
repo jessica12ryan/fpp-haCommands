@@ -207,7 +207,7 @@ var haDev = {
         haDev.showConfirm('This will update the plugin to the latest version from GitHub. Your configuration will be preserved. Are you sure?', function() {
             $('#check_updates_btn').prop('disabled', true);
             $.ajax({
-                url: 'api/plugin/fpp-haCommands/reinstall',
+                url: 'api/plugin/fpp-haCommands/update',
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',

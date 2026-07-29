@@ -444,6 +444,7 @@ function getEndpointsfpphaCommands() {
     $result[] = ['method' => 'POST', 'endpoint' => 'reset', 'callback' => 'hacResetEndpoint'];
     $result[] = ['method' => 'POST', 'endpoint' => 'reset-cache', 'callback' => 'hacResetCacheEndpoint'];
     $result[] = ['method' => 'POST', 'endpoint' => 'restart-fppd', 'callback' => 'hacRestartFPPDEndpoint'];
+    $result[] = ['method' => 'POST', 'endpoint' => 'update', 'callback' => 'hacUpdateEndpoint'];
     $result[] = ['method' => 'POST', 'endpoint' => 'reinstall', 'callback' => 'hacReinstallEndpoint'];
     $result[] = ['method' => 'POST', 'endpoint' => 'uninstall', 'callback' => 'hacUninstallEndpoint'];
     $result[] = ['method' => 'GET', 'endpoint' => 'check-updates', 'callback' => 'hacCheckUpdatesEndpoint'];
@@ -734,6 +735,72 @@ function hacCheckUpdatesEndpoint() {
         'localSha' => !empty($localSha) ? substr($localSha, 0, 7) : 'unknown',
         'remoteSha' => !empty($remoteSha) ? substr($remoteSha, 0, 7) : 'unknown',
     ]);
+}
+
+function hacUpdateEndpoint() {
+    $pluginDir = HAC_PLUGIN_DIR;
+    $backupDir = sys_get_temp_dir() . '/fpp-ha-update-backup';
+
+    @mkdir($backupDir, 0777, true);
+
+    $configFiles = [
+        'config/ha_settings.json',
+        'config/plugin.fpp-haCommands',
+        'config/entities_cache.json',
+        'commands/descriptions.json',
+    ];
+
+    foreach ($configFiles as $file) {
+        $src = $pluginDir . '/' . $file;
+        if (file_exists($src)) {
+            @copy($src, $backupDir . '/' . str_replace('/', '_', $file));
+        }
+    }
+
+    if (is_dir($pluginDir . '/.git')) {
+        exec('git -C ' . escapeshellarg($pluginDir) . ' fetch origin 2>&1');
+        exec('git -C ' . escapeshellarg($pluginDir) . ' checkout -- . 2>&1');
+        exec('git -C ' . escapeshellarg($pluginDir) . ' clean -fd 2>&1');
+        exec('git -C ' . escapeshellarg($pluginDir) . ' reset --hard origin/main 2>&1');
+    }
+
+    foreach ($configFiles as $file) {
+        $backupFile = $backupDir . '/' . str_replace('/', '_', $file);
+        if (file_exists($backupFile)) {
+            $destDir = dirname($pluginDir . '/' . $file);
+            @mkdir($destDir, 0777, true);
+            @copy($backupFile, $pluginDir . '/' . $file);
+        }
+    }
+
+    exec('rm -rf ' . escapeshellarg($backupDir));
+
+    @chmod($pluginDir . '/config', 0775);
+    @chmod($pluginDir . '/commands', 0775);
+    foreach (glob($pluginDir . '/commands/*.php') as $cmd) {
+        @chmod($cmd, 0755);
+    }
+
+    $pluginInfoFile = $pluginDir . '/pluginInfo.json';
+    if (file_exists($pluginInfoFile)) {
+        $info = json_decode(file_get_contents($pluginInfoFile), true);
+        if ($info && isset($info['versions'])) {
+            $sha = trim(@shell_exec('git -C ' . escapeshellarg($pluginDir) . ' rev-parse HEAD 2>/dev/null') ?? '');
+            if (!empty($sha)) {
+                foreach ($info['versions'] as &$v) {
+                    $v['sha'] = $sha;
+                }
+                file_put_contents($pluginInfoFile, json_encode($info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+            }
+        }
+    }
+
+    $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
+    @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
+
+    hacLog('Plugin updated via developer tab');
+
+    return json(['success' => true, 'message' => 'Plugin updated successfully.']);
 }
 
 function hacReinstallEndpoint() {
