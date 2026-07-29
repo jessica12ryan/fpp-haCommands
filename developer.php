@@ -13,6 +13,25 @@ $showDevTab = $uiLevel >= 3;
 .btn-danger { background: #dc3545; color: #fff; border: 1px solid #dc3545; padding: 10px 28px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; box-sizing: border-box; white-space: nowrap; display: inline-block; }
 .btn-danger:hover { background: #bb2d3b; }
 .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-warning { background: #e67e22; color: #fff; border: 1px solid #e67e22; padding: 10px 28px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; box-sizing: border-box; white-space: nowrap; display: inline-block; }
+.btn-warning:hover { background: #d35400; }
+.btn-warning:disabled { opacity: 0.6; cursor: not-allowed; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+.modal-box { background: #fff; color: #333; border-radius: 8px; padding: 24px 32px; max-width: 420px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center; }
+.modal-message { font-size: 15px; line-height: 1.5; margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.modal-btn { padding: 10px 24px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; border: none; }
+.modal-btn-primary { background: #dc3545; color: #fff; }
+.modal-btn-primary:hover { background: #bb2d3b; }
+.modal-btn-warning { background: #e67e22; color: #fff; }
+.modal-btn-warning:hover { background: #d35400; }
+.modal-btn-default { background: #6c757d; color: #fff; }
+.modal-btn-default:hover { background: #5c636a; }
+.modal-btn-info { background: #0d6efd; color: #fff; }
+.modal-btn-info:hover { background: #0b5ed7; }
+.btn-info { background: #0d6efd; color: #fff; border: 1px solid #0d6efd; padding: 10px 28px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; box-sizing: border-box; white-space: nowrap; display: inline-block; }
+.btn-info:hover { background: #0b5ed7; }
+.btn-info:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>
 
 <div class="tab-bar">
@@ -33,57 +52,169 @@ $showDevTab = $uiLevel >= 3;
         <legend>Developer Tools</legend>
         <div class="p-3">
 
-            <h3 style="color:#dc3545;">Reset Everything</h3>
+            <h3 style="color:#dc3545;">Reset</h3>
             <p>
-                This will clear the HA URL and Long-Lived Access Token, delete all cached entities
-                and generated commands, returning the plugin to a freshly installed state.
-                FPPD will be prompted to restart.
+                Reset cached entities and generated commands, or perform a full factory reset that also
+                clears the HA URL and Long-Lived Access Token. FPPD will be prompted to restart
+                after either action.
             </p>
-            <div>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="btn-warning" id="reset_cache_btn" onclick="haDev.resetCache();">&#9888; Reset Cached Entities</button>
                 <button type="button" class="btn-danger" id="reset_btn" onclick="haDev.reset();">&#9888; Reset Everything</button>
             </div>
-            <div id="reset_result"></div>
-
         </div>
     </fieldset>
 </div>
 
+    <fieldset class="border p-3" style="margin-top:16px;">
+        <legend>Plugin Management</legend>
+        <div class="p-3">
+            <p>
+                Reinstall the plugin to apply file updates, or uninstall it from the system.
+            </p>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="btn-info" id="reinstall_btn" onclick="haDev.reinstall();">&#8635; Reinstall Plugin</button>
+                <button type="button" class="btn-danger" id="uninstall_btn" onclick="haDev.uninstall();">&#9888; Uninstall Plugin</button>
+            </div>
+        </div>
+    </fieldset>
+</div>
+
+<div id="modal_overlay" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-message" id="modal_message"></div>
+        <div class="modal-actions" id="modal_actions"></div>
+    </div>
+</div>
+
 <script>
 var haDev = {
-    reset: function() {
-        if (!confirm('This will clear all configuration, cached entities, and generated commands. FPPD will be prompted to restart. Are you sure?')) {
-            return;
-        }
-        if (!confirm('Are you really sure? This action cannot be undone.')) {
-            return;
-        }
-
-        $('#reset_btn').prop('disabled', true);
-        $('#reset_result').html('<span class="text-warning">Resetting plugin...</span>');
-
-        $.ajax({
-            url: 'api/plugin/fpp-haCommands/reset',
-            type: 'POST',
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function(data) {
-                    if (data.success) {
-                        $('#reset_result').html('<span class="text-success">' + (data.message || 'Reset complete.') + '</span><br><span class="text-warning">Please restart FPPD when prompted.</span>');
-                } else {
-                    $('#reset_result').html('<span class="text-danger">' + (data.error || 'Reset failed.') + '</span>');
-                    $('#reset_btn').prop('disabled', false);
-                }
-            },
-            error: function(xhr) {
-                var msg = 'Could not reach the plugin API.';
-                try {
-                    var resp = JSON.parse(xhr.responseText);
-                    if (resp.error) msg = resp.error;
-                } catch(e) {}
-                $('#reset_result').html('<span class="text-danger">' + msg + '</span>');
-                $('#reset_btn').prop('disabled', false);
-            }
+    showModal: function(message, buttons) {
+        $('#modal_message').html(message);
+        var $actions = $('#modal_actions').empty();
+        $.each(buttons, function(i, btn) {
+            $actions.append(
+                $('<button>', {
+                    text: btn.label,
+                    class: 'modal-btn ' + (btn['class'] || 'modal-btn-default'),
+                    click: function() {
+                        if (btn.onClick) btn.onClick();
+                        else haDev.hideModal();
+                    }
+                })
+            );
         });
+        $('#modal_overlay').show();
+    },
+    hideModal: function() {
+        $('#modal_overlay').hide();
+    },
+    showConfirm: function(message, onConfirm, confirmClass) {
+        haDev.showModal(message, [
+            { label: 'Cancel', 'class': 'modal-btn-default', onClick: haDev.hideModal },
+            { label: 'Confirm', 'class': confirmClass || 'modal-btn-primary', onClick: function() { haDev.hideModal(); if (onConfirm) onConfirm(); } }
+        ]);
+    },
+    showAlert: function(message) {
+        haDev.showModal(message, [
+            { label: 'OK', 'class': 'modal-btn-primary' }
+        ]);
+    },
+    resetCache: function() {
+        haDev.showConfirm('This will clear all cached entities and generated commands. FPPD will be prompted to restart. The HA URL and token will be preserved. Are you sure?', function() {
+            $('#reset_cache_btn').prop('disabled', true);
+            $.ajax({
+                url: 'api/plugin/fpp-haCommands/reset-cache',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function() {
+                    location.reload();
+                },
+                error: function(xhr) {
+                    var msg = 'Could not reach the plugin API.';
+                    try {
+                        var resp = JSON.parse(xhr.responseText);
+                        if (resp.error) msg = resp.error;
+                    } catch(e) {}
+                    $('#reset_cache_btn').prop('disabled', false);
+                    haDev.showAlert(msg);
+                }
+            });
+        }, 'modal-btn-primary');
+    },
+    reset: function() {
+        haDev.showConfirm('This will clear all configuration, cached entities, and generated commands. The HA URL and token will not be preserved. FPPD will be prompted to restart. Are you sure?', function() {
+            $('#reset_btn').prop('disabled', true);
+            $.ajax({
+                url: 'api/plugin/fpp-haCommands/reset',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function() {
+                    location.reload();
+                },
+                error: function(xhr) {
+                    var msg = 'Could not reach the plugin API.';
+                    try {
+                        var resp = JSON.parse(xhr.responseText);
+                        if (resp.error) msg = resp.error;
+                    } catch(e) {}
+                    $('#reset_btn').prop('disabled', false);
+                    haDev.showAlert(msg);
+                }
+            });
+        }, 'modal-btn-primary');
+    },
+    reinstall: function() {
+        haDev.showConfirm('This will reinstall the plugin. Your configuration will be preserved. Are you sure?', function() {
+            $('#reinstall_btn').prop('disabled', true);
+            $.ajax({
+                url: 'api/plugin/fpp-haCommands/reinstall',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function() {
+                    location.reload();
+                },
+                error: function(xhr) {
+                    var msg = 'Could not reach the plugin API.';
+                    try {
+                        var resp = JSON.parse(xhr.responseText);
+                        if (resp.error) msg = resp.error;
+                    } catch(e) {}
+                    $('#reinstall_btn').prop('disabled', false);
+                    haDev.showAlert(msg);
+                }
+            });
+        }, 'modal-btn-info');
+    },
+    uninstall: function() {
+        haDev.showConfirm('This will completely remove the plugin and all its files. Configuration will be lost. FPPD will be prompted to restart. Are you sure?', function() {
+            $('#uninstall_btn').prop('disabled', true);
+            $.ajax({
+                url: 'api/plugin/fpp-haCommands/uninstall',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function() {
+                    window.location.href = 'plugins.php?tab=available';
+                },
+                error: function(xhr) {
+                    var msg = 'Could not reach the plugin API.';
+                    try {
+                        var resp = JSON.parse(xhr.responseText);
+                        if (resp.error) msg = resp.error;
+                    } catch(e) {}
+                    $('#uninstall_btn').prop('disabled', false);
+                    haDev.showAlert(msg);
+                }
+            });
+        }, 'modal-btn-primary');
     }
 };
+
+$(document).on('click', '#modal_overlay', function(e) {
+    if (e.target === this) haDev.hideModal();
+});
 </script>

@@ -442,7 +442,10 @@ function getEndpointsfpphaCommands() {
     $result[] = ['method' => 'GET', 'endpoint' => 'icon', 'callback' => 'hacIconEndpoint'];
     $result[] = ['method' => 'GET', 'endpoint' => 'logs', 'callback' => 'hacLogsEndpoint'];
     $result[] = ['method' => 'POST', 'endpoint' => 'reset', 'callback' => 'hacResetEndpoint'];
+    $result[] = ['method' => 'POST', 'endpoint' => 'reset-cache', 'callback' => 'hacResetCacheEndpoint'];
     $result[] = ['method' => 'POST', 'endpoint' => 'restart-fppd', 'callback' => 'hacRestartFPPDEndpoint'];
+    $result[] = ['method' => 'POST', 'endpoint' => 'reinstall', 'callback' => 'hacReinstallEndpoint'];
+    $result[] = ['method' => 'POST', 'endpoint' => 'uninstall', 'callback' => 'hacUninstallEndpoint'];
 
     return $result;
 }
@@ -673,6 +676,31 @@ function hacResetEndpoint() {
     return json($result);
 }
 
+function hacResetCacheEndpoint() {
+    $result = ['success' => true, 'message' => 'Cached entities and descriptions have been cleared.', 'restart_prompt' => true];
+
+    $cleared = [];
+
+    if (file_exists(HAC_CACHE_FILE)) {
+        if (@unlink(HAC_CACHE_FILE)) {
+            $cleared[] = 'entity_cache';
+        }
+    }
+
+    if (file_exists(HAC_DESCRIPTIONS_FILE)) {
+        if (@unlink(HAC_DESCRIPTIONS_FILE)) {
+            $cleared[] = 'command_descriptions';
+        }
+    }
+
+    $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
+    @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
+
+    hacLog('Plugin cache reset: ' . implode(', ', $cleared));
+
+    return json($result);
+}
+
 function hacRestartFPPDEndpoint() {
     $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
     $result = @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
@@ -682,5 +710,79 @@ function hacRestartFPPDEndpoint() {
     }
 
     return json(['success' => true, 'message' => 'FPPD restart flag has been set.']);
+}
+
+function hacReinstallEndpoint() {
+    $pluginDir = HAC_PLUGIN_DIR;
+    $backupDir = sys_get_temp_dir() . '/fpp-ha-reinstall-backup';
+
+    @mkdir($backupDir, 0777, true);
+
+    $configFiles = [
+        'config/ha_settings.json',
+        'config/plugin.fpp-haCommands',
+        'config/entities_cache.json',
+        'commands/descriptions.json',
+    ];
+
+    foreach ($configFiles as $file) {
+        $src = $pluginDir . '/' . $file;
+        if (file_exists($src)) {
+            @copy($src, $backupDir . '/' . str_replace('/', '_', $file));
+        }
+    }
+
+    if (is_dir($pluginDir . '/.git')) {
+        exec('git -C ' . escapeshellarg($pluginDir) . ' fetch origin 2>&1');
+        exec('git -C ' . escapeshellarg($pluginDir) . ' checkout -- . 2>&1');
+        exec('git -C ' . escapeshellarg($pluginDir) . ' clean -fd 2>&1');
+        exec('git -C ' . escapeshellarg($pluginDir) . ' reset --hard origin/main 2>&1');
+    }
+
+    foreach ($configFiles as $file) {
+        $backupFile = $backupDir . '/' . str_replace('/', '_', $file);
+        if (file_exists($backupFile)) {
+            $destDir = dirname($pluginDir . '/' . $file);
+            @mkdir($destDir, 0777, true);
+            @copy($backupFile, $pluginDir . '/' . $file);
+        }
+    }
+
+    exec('rm -rf ' . escapeshellarg($backupDir));
+
+    @chmod($pluginDir . '/config', 0775);
+    @chmod($pluginDir . '/commands', 0775);
+    foreach (glob($pluginDir . '/commands/*.php') as $cmd) {
+        @chmod($cmd, 0755);
+    }
+
+    $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
+    @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
+
+    hacLog('Plugin reinstalled via developer tab');
+
+    return json(['success' => true, 'message' => 'Plugin reinstalled successfully.']);
+}
+
+function hacUninstallEndpoint() {
+    $pluginDir = HAC_PLUGIN_DIR;
+
+    $it = new RecursiveDirectoryIterator($pluginDir, RecursiveDirectoryIterator::SKIP_DOTS);
+    $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+    foreach ($files as $file) {
+        if ($file->isDir()) {
+            @rmdir($file->getRealPath());
+        } else {
+            @unlink($file->getRealPath());
+        }
+    }
+    @rmdir($pluginDir);
+
+    $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
+    @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
+
+    hacLog('Plugin uninstalled via developer tab');
+
+    return json(['success' => true, 'message' => 'Plugin has been removed. FPPD will be prompted to restart.']);
 }
 ?>
