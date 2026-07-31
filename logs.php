@@ -25,11 +25,11 @@ $showDevTab = $uiLevel >= 3;
 <div class="tab-bar">
     <a href="plugin.php?plugin=fpp-haCommands&page=status.php" class="<?php echo basename(__FILE__) === 'status.php' ? 'active' : ''; ?>">&#9632; Status</a>
     <a href="plugin.php?plugin=fpp-haCommands&page=config.php" class="<?php echo basename(__FILE__) === 'config.php' ? 'active' : ''; ?>">&#9881; Config</a>
-    <a href="plugin.php?plugin=fpp-haCommands&page=help.php" class="<?php echo basename(__FILE__) === 'help.php' ? 'active' : ''; ?>">&#63; Help</a>
-    <a href="plugin.php?plugin=fpp-haCommands&page=about.php" class="<?php echo basename(__FILE__) === 'about.php' ? 'active' : ''; ?>">&#9432; About</a>
     <?php if ($showLogsTab): ?>
     <a href="plugin.php?plugin=fpp-haCommands&page=logs.php" class="<?php echo basename(__FILE__) === 'logs.php' ? 'active' : ''; ?>">&#9776; Logs</a>
     <?php endif; ?>
+    <a href="plugin.php?plugin=fpp-haCommands&page=help.php" class="<?php echo basename(__FILE__) === 'help.php' ? 'active' : ''; ?>">&#63; Help</a>
+    <a href="plugin.php?plugin=fpp-haCommands&page=about.php" class="<?php echo basename(__FILE__) === 'about.php' ? 'active' : ''; ?>">&#9432; About</a>
     <?php if ($showDevTab): ?>
     <a href="plugin.php?plugin=fpp-haCommands&page=developer.php" class="<?php echo basename(__FILE__) === 'developer.php' ? 'active' : ''; ?>">&#9881; Developer</a>
     <?php endif; ?>

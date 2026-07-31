@@ -52,6 +52,17 @@ if (file_exists($descriptionsFile)) {
     $cmdCount = count($cmds ?? []);
 }
 
+$presetFile = ($settings['configDirectory'] ?? '') . '/commandPresets.json';
+$presetCount = 0;
+if (file_exists($presetFile)) {
+    $presetData = json_decode(file_get_contents($presetFile), true);
+    foreach (($presetData['commands'] ?? []) as $preset) {
+        if (isset($preset['command']) && strpos($preset['command'], 'HA - ') === 0) {
+            $presetCount++;
+        }
+    }
+}
+
 $uiLevel = (int)($settings['uiLevel'] ?? 0);
 $showLogsTab = $uiLevel >= 1;
 $showDevTab = $uiLevel >= 3;
@@ -210,11 +221,11 @@ $(document).ready(function() {
 <div class="tab-bar">
     <a href="plugin.php?plugin=fpp-haCommands&page=status.php" class="<?php echo basename(__FILE__) === 'status.php' ? 'active' : ''; ?>">&#9632; Status</a>
     <a href="plugin.php?plugin=fpp-haCommands&page=config.php" class="<?php echo basename(__FILE__) === 'config.php' ? 'active' : ''; ?>">&#9881; Config</a>
-    <a href="plugin.php?plugin=fpp-haCommands&page=help.php" class="<?php echo basename(__FILE__) === 'help.php' ? 'active' : ''; ?>">&#63; Help</a>
-    <a href="plugin.php?plugin=fpp-haCommands&page=about.php" class="<?php echo basename(__FILE__) === 'about.php' ? 'active' : ''; ?>">&#9432; About</a>
     <?php if ($showLogsTab): ?>
     <a href="plugin.php?plugin=fpp-haCommands&page=logs.php" class="<?php echo basename(__FILE__) === 'logs.php' ? 'active' : ''; ?>">&#9776; Logs</a>
     <?php endif; ?>
+    <a href="plugin.php?plugin=fpp-haCommands&page=help.php" class="<?php echo basename(__FILE__) === 'help.php' ? 'active' : ''; ?>">&#63; Help</a>
+    <a href="plugin.php?plugin=fpp-haCommands&page=about.php" class="<?php echo basename(__FILE__) === 'about.php' ? 'active' : ''; ?>">&#9432; About</a>
     <?php if ($showDevTab): ?>
     <a href="plugin.php?plugin=fpp-haCommands&page=developer.php" class="<?php echo basename(__FILE__) === 'developer.php' ? 'active' : ''; ?>">&#9881; Developer</a>
     <?php endif; ?>
@@ -262,6 +273,34 @@ $(document).ready(function() {
                     </td>
                 </tr>
             </table>
+        </div>
+    </fieldset>
+
+    <br />
+
+    <fieldset class="border p-3">
+        <legend>xLights Setup</legend>
+        <i>This section is optional and only required if you want to use HA commands within
+            an xLights sequence.</i>
+        <div class="p-3">
+            <table>
+                <tr>
+                    <td style="padding: 4px;"><b>Command Presets:</b></td>
+                    <td style="padding: 4px;" id="preset_count">
+                        <?php echo $presetCount; ?> preset(s) configured for this plugin's commands
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px;"></td>
+                    <td style="padding: 4px;">
+                        <a href="commandPresets.php" class="buttons">Set Command Presets</a>
+                    </td>
+                </tr>
+            </table>
+            <p style="margin: 8px 0 0 0;">
+                FPP Command Presets let you fire HA actions at specific frames in xLights sequences
+                using the <b>FPP Commands</b> timing track.
+            </p>
         </div>
     </fieldset>
 
