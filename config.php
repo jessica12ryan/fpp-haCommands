@@ -272,6 +272,18 @@ $(document).ready(function() {
                         <div id="update_result" style="margin-top:4px;"></div>
                     </td>
                 </tr>
+                <tr>
+                    <td style="padding: 4px;"><b>Token configured:</b></td>
+                    <td style="padding: 4px;"><?php echo $haToken ? '<span class="text-success">Yes</span>' : '<span class="text-danger">No</span>'; ?></td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px;"><b>Commands generated:</b></td>
+                    <td style="padding: 4px;" id="stats"><?php echo $cmdCount; ?></td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px;"><b>Cached entities:</b></td>
+                    <td style="padding: 4px;"><?php echo $entityCount; ?></td>
+                </tr>
             </table>
         </div>
     </fieldset>
@@ -301,36 +313,6 @@ $(document).ready(function() {
                 FPP Command Presets let you fire HA actions at specific frames in xLights sequences
                 using the <b>FPP Commands</b> timing track.
             </p>
-        </div>
-    </fieldset>
-
-    <br />
-
-    <fieldset class="border p-3">
-        <legend>Current Status</legend>
-        <div class="p-3">
-            <table>
-                <tr>
-                    <td style="padding: 4px;"><b>HA URL:</b></td>
-                    <td style="padding: 4px;"><?php echo $haUrl ? htmlspecialchars($haUrl) : '<span class="text-secondary">Not configured</span>'; ?></td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px;"><b>Token configured:</b></td>
-                    <td style="padding: 4px;"><?php echo $haToken ? '<span class="text-success">Yes</span>' : '<span class="text-danger">No</span>'; ?></td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px;"><b>Cached entities:</b></td>
-                    <td style="padding: 4px;"><?php echo $entityCount; ?></td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px;"><b>Domains discovered:</b></td>
-                    <td style="padding: 4px;"><?php echo $domainCount; ?></td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px;"><b>Commands generated:</b></td>
-                    <td style="padding: 4px;" id="stats"><?php echo $cmdCount; ?></td>
-                </tr>
-            </table>
         </div>
     </fieldset>
 

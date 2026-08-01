@@ -52,6 +52,17 @@ if (file_exists($descriptionsFile)) {
     }
 }
 
+$presetFile = ($settings['configDirectory'] ?? '') . '/commandPresets.json';
+$presetCount = 0;
+if (file_exists($presetFile)) {
+    $presetData = json_decode(file_get_contents($presetFile), true);
+    foreach (($presetData['commands'] ?? []) as $preset) {
+        if (isset($preset['command']) && strpos($preset['command'], 'HA - ') === 0) {
+            $presetCount++;
+        }
+    }
+}
+
 $uiLevel = (int)($settings['uiLevel'] ?? 0);
 $showLogsTab = $uiLevel >= 1;
 $showDevTab = $uiLevel >= 3;
@@ -112,6 +123,10 @@ $showDevTab = $uiLevel >= 3;
                 <tr>
                     <td style="padding: 4px;"><b>Commands (with entities):</b></td>
                     <td style="padding: 4px;"><?php echo $entityCmdCount; ?> / <?php echo $cmdCount; ?> total</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px;"><b>HA Command Presets:</b></td>
+                    <td style="padding: 4px;"><?php echo $presetCount; ?></td>
                 </tr>
                 <?php endif; ?>
             </table>
