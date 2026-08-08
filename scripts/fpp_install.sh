@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 #############################################################
 ## Home Assistant Commands Plugin for FPP (fpp-haCommands) ##
