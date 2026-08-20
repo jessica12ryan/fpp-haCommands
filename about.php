@@ -65,6 +65,7 @@ $showDevTab = $uiLevel >= 3;
                     <a href="https://github.com/jessica12ryan/fpp-haCommands" target="_blank">GitHub Repository</a><br>
                     <a href="https://github.com/jessica12ryan/fpp-haCommands/issues" target="_blank">Issue Tracker &amp; Feature Requests</a><br>
                     <a href="https://github.com/jessica12ryan/fpp-haCommands/blob/main/README.md" target="_blank">README &amp; Installation Guide</a>
+                    <a href="https://www.youtube.com/watch?v=0sr4Vkk4KS8" target="_blank">xLights Gems Video Demo</a>
                 </p>
 
                 <h4>Plugin Info</h4>
