@@ -10,6 +10,7 @@
  * #############################################################
  */
 ?>
+<?php include __DIR__ . '/help_overlay.inc'; ?>
 <div class="hac-footer mt-3 pt-2 text-muted small border-top" style="text-align:center;">
     Copyright &copy; 2026 jessica12ryan. Licensed under the MIT License.<br>FPP is &copy; Falcon Christmas. Home Assistant is &copy; Nabu Casa. This plugin is an independent integration and is not affiliated with or endorsed by either project.
 </div>
