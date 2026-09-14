@@ -1,48 +1,79 @@
 {
-	"repoName": "fpp-haCommands",
-	"name": "Home Assistant Commands Plugin for FPP",
-	"author": "jessica12ryan",
-	"description": "Integrates Home Assistant entities and actions into FPP as commands. Configure your HA connection, discover entities, and control lights, switches, covers, and more directly from FPP commands, scheduler, playlists, GPIO's, and xLights Sequences.",
-	"homeURL": "https://github.com/jessica12ryan/fpp-haCommands",
-	"srcURL": "https://github.com/jessica12ryan/fpp-haCommands.git",
-	"bugURL": "https://github.com/jessica12ryan/fpp-haCommands/issues",
-	"iconURL": "https://raw.githubusercontent.com/jessica12ryan/fpp-haCommands/main/icon.png",
-	"versions": [
-		{
-			"minFPPVersion": "8.0",
-			"maxFPPVersion": "8.99",
-			"branch": "main",
-			"sha": "",
-			"allowUpdates": 1,
-			"dependencies": {
-				"plugins": [],
-				"packages": ["php-curl"],
-				"scripts": []
-			}
-		},
-		{
-			"minFPPVersion": "9.0",
-			"maxFPPVersion": "9.99",
-			"branch": "main",
-			"sha": "",
-			"allowUpdates": 1,
-			"dependencies": {
-				"plugins": [],
-				"packages": ["php-curl"],
-				"scripts": []
-			}
-		},
-		{
-			"minFPPVersion": "10.0",
-			"maxFPPVersion": "0",
-			"branch": "main",
-			"sha": "",
-			"allowUpdates": 1,
-			"dependencies": {
-				"plugins": [],
-				"packages": ["php-curl"],
-				"scripts": []
-			}
-		}
-	]
+    "repoName": "fpp-haCommands",
+    "name": "Home Assistant Commands Plugin for FPP",
+    "author": "jessica12ryan",
+    "description": "Integrates Home Assistant entities and actions into FPP as commands. Configure your HA connection, discover entities, and control lights, switches, covers, and more directly from FPP commands, scheduler, playlists, GPIO's, and xLights Sequences.",
+    "homeURL": "https://github.com/jessica12ryan/fpp-haCommands",
+    "srcURL": "https://github.com/jessica12ryan/fpp-haCommands.git",
+    "bugURL": "https://github.com/jessica12ryan/fpp-haCommands/issues",
+    "iconURL": "https://raw.githubusercontent.com/jessica12ryan/fpp-haCommands/main/icon.png",
+    "versions": [
+        {
+            "minFPPVersion": "8.0",
+            "maxFPPVersion": "8.99",
+            "branch": "main",
+            "sha": "",
+            "allowUpdates": 1,
+            "dependencies": {
+                "plugins": [],
+                "packages": [
+                    "php-curl"
+                ],
+                "scripts": []
+            }
+        },
+        {
+            "minFPPVersion": "9.0",
+            "maxFPPVersion": "9.99",
+            "branch": "main",
+            "sha": "",
+            "allowUpdates": 1,
+            "dependencies": {
+                "plugins": [],
+                "packages": [
+                    "php-curl"
+                ],
+                "scripts": []
+            }
+        },
+        {
+            "minFPPVersion": "10.0",
+            "maxFPPVersion": "0",
+            "branch": "main",
+            "sha": "",
+            "allowUpdates": 1,
+            "dependencies": {
+                "plugins": [],
+                "packages": [
+                    "php-curl"
+                ],
+                "scripts": []
+            }
+        }
+    ],
+    "privacy": {
+        "summary": "Sends commands from FPP to Home Assistant using the RestAPI.",
+        "sends": [
+            {
+                "to": "Home Assistant",
+                "what": "API Commands",
+                "why": "to allow controlling of Home Assistant via FPP/xLights",
+                "alwaysOn": false
+            }
+        ],
+        "collects": [
+            {
+                "what": "Logs",
+                "about": "operator",
+                "keptDays": null,
+                "canDelete": false,
+                "where": "/home/fpp/media/logs/plugin-fpp-haCommands.log"
+            }
+        ],
+        "sensors": [],
+        "remoteAccess": "none",
+        "systemChanges": [],
+        "closedCode": false,
+        "other": "none"
+    }
 }
