@@ -63,6 +63,20 @@
         ],
         "collects": [
             {
+                "what": "Home Assistant Credentials",
+                "about": "operator",
+                "keptDays": null,
+                "canDelete": true,
+                "where": "/home/fpp/media/plugins/fpp-haCommands/config/plugin.fpp-haCommands"
+            },
+            {
+                "what": "Home Assistant Entities",
+                "about": "operator",
+                "keptDays": null,
+                "canDelete": true,
+                "where": "/home/fpp/media/plugins/fpp-haCommands/config/entities_cache.json"
+            },
+            {
                 "what": "Logs",
                 "about": "operator",
                 "keptDays": null,
