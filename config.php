@@ -9,10 +9,9 @@
  * #############################################################
  */
 $pluginDir = __DIR__;
-$iniFile = $pluginDir . '/config/plugin.fpp-haCommands';
-$oldJsonFile = $pluginDir . '/config/ha_settings.json';
-$cacheFile = $pluginDir . '/config/entities_cache.json';
-$descriptionsFile = $pluginDir . '/commands/descriptions.json';
+require_once $pluginDir . '/config/settings_helper.php';
+$cacheFile = hacRuntimeCacheFile($pluginDir);
+$descriptionsFile = hacRuntimeDescriptionsFile($pluginDir);
 
 $haUrl = '';
 $haToken = '';
@@ -22,22 +21,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'save_settings') {
         $haUrl = rtrim($_POST['ha_url'] ?? '', '/');
         $haToken = $_POST['ha_token'] ?? '';
-        $ini = "ha_url=" . $haUrl . "\nha_token=" . $haToken . "\n";
-        file_put_contents($iniFile, $ini);
-        @unlink($oldJsonFile);
+        hacSaveSettings($haUrl, $haToken, $pluginDir);
         $settingsSaved = true;
     }
 }
 
-if (file_exists($iniFile)) {
-    $s = parse_ini_file($iniFile);
-    $haUrl = $s['ha_url'] ?? '';
-    $haToken = $s['ha_token'] ?? '';
-} elseif (file_exists($oldJsonFile)) {
-    $s = json_decode(file_get_contents($oldJsonFile), true);
-    $haUrl = $s['ha_url'] ?? '';
-    $haToken = $s['ha_token'] ?? '';
+$s = hacGetSettings($pluginDir);
+$haUrl = $s['ha_url'] ?? '';
+$haToken = $s['ha_token'] ?? '';
+// Refresh runtime read paths (helper may have restored them from persistent copies).
+$cacheFile = hacGetCacheFileForRead($pluginDir);
+if ($cacheFile === '') {
+    $cacheFile = hacRuntimeCacheFile($pluginDir);
 }
+$descriptionsReadFile = hacGetDescriptionsFileForRead($pluginDir);
+if ($descriptionsReadFile === '') {
+    $descriptionsReadFile = hacRuntimeDescriptionsFile($pluginDir);
+}
+$descriptionsFile = $descriptionsReadFile;
 
 $entityCount = 0;
 $domainCount = 0;

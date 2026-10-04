@@ -2,7 +2,7 @@
 <p>Configure the connection to Home Assistant and generate FPP commands from your HA entities.</p>
 
 <h4>HA URL</h4>
-<p>Full URL to your Home Assistant instance including protocol and port, e.g. <code>http://homeassistant.local:8123</code> or <code>http://192.168.1.100:8123</code>. Trailing slash is removed automatically. Stored in <code>config/plugin.fpp-haCommands</code>.</p>
+<p>Full URL to your Home Assistant instance including protocol and port, e.g. <code>http://homeassistant.local:8123</code> or <code>http://192.168.1.100:8123</code>. Trailing slash is removed automatically. Stored persistently in <code>/home/fpp/media/config/plugin.fpp-haCommands</code> so it survives plugin reinstalls and OS upgrades (mirrored to the plugin config dir for runtime).</p>
 
 <h4>Long-Lived Access Token</h4>
 <p>Generate at <b>HA &rarr; Profile &rarr; Long-Lived Access Tokens</b> (<code>http://HA:8123/profile</code>). Paste here; it is stored alongside the URL and never in browser storage. Field is masked as a password.</p>

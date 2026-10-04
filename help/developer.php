@@ -4,7 +4,7 @@
 <h4>Updates</h4>
 <ul>
     <li><b>&#8635; Check for Updates</b> &mdash; Calls <code>api/plugin/fpp-haCommands/check-updates</code> which compares local <code>git rev-parse HEAD</code> vs <code>git ls-remote origin main</code>. Shows local/remote 7-char SHAs. If behind, button becomes <b>Install Updates</b>.</li>
-    <li><b>Install Updates</b> &mdash; Backs up <code>config/ha_settings.json</code>, <code>config/plugin.fpp-haCommands</code>, <code>config/entities_cache.json</code>, <code>commands/descriptions.json</code> to <code>/tmp</code>, does <code>git fetch/checkout/clean/reset --hard origin/main</code>, restores backups, fixes permissions, updates <code>pluginInfo.json</code> SHAs, and sets the FPP restart flag.</li>
+    <li><b>Install Updates</b> &mdash; Syncs settings and caches to persistent storage in <code>/home/fpp/media/config</code> (which survives reinstalls), does <code>git fetch/checkout/clean/reset --hard origin/main</code>, restores runtime copies from persistent storage, fixes permissions, updates <code>pluginInfo.json</code> SHAs, and sets the FPP restart flag.</li>
 </ul>
 
 <h4>Plugin Management</h4>
@@ -15,7 +15,7 @@
 
 <h4>Reset</h4>
 <ul>
-    <li><b>&#9888; Reset Cached Entities</b> &mdash; Deletes <code>config/entities_cache.json</code> and <code>commands/descriptions.json</code> only; preserves HA URL/token. Prompts restart. Use when entities are stale.</li>
+    <li><b>&#9888; Reset Cached Entities</b> &mdash; Deletes persistent and runtime copies of <code>entities_cache</code> and <code>descriptions</code> only; preserves HA URL/token. Prompts restart. Use when entities are stale.</li>
     <li><b>&#9888; Reset Everything</b> &mdash; Clears URL/token to empty, deletes cache and descriptions; <b>HA connection must be reconfigured.</b> Also sets restart flag.</li>
 </ul>
 

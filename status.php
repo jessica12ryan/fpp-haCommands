@@ -9,24 +9,23 @@
  * #############################################################
  */
 $pluginDir = __DIR__;
-$iniFile = $pluginDir . '/config/plugin.fpp-haCommands';
-$oldJsonFile = $pluginDir . '/config/ha_settings.json';
-$cacheFile = $pluginDir . '/config/entities_cache.json';
-$descriptionsFile = $pluginDir . '/commands/descriptions.json';
+require_once $pluginDir . '/config/settings_helper.php';
 
 $haUrl = '';
 $haToken = '';
 $hasSettings = false;
-if (file_exists($iniFile)) {
-    $s = parse_ini_file($iniFile);
-    $haUrl = $s['ha_url'] ?? '';
-    $haToken = $s['ha_token'] ?? '';
-    $hasSettings = !empty($haUrl) && !empty($haToken);
-} elseif (file_exists($oldJsonFile)) {
-    $s = json_decode(file_get_contents($oldJsonFile), true);
-    $haUrl = $s['ha_url'] ?? '';
-    $haToken = $s['ha_token'] ?? '';
-    $hasSettings = !empty($haUrl) && !empty($haToken);
+$s = hacGetSettings($pluginDir);
+$haUrl = $s['ha_url'] ?? '';
+$haToken = $s['ha_token'] ?? '';
+$hasSettings = !empty($haUrl) && !empty($haToken);
+
+$cacheFile = hacGetCacheFileForRead($pluginDir);
+if ($cacheFile === '') {
+    $cacheFile = hacRuntimeCacheFile($pluginDir);
+}
+$descriptionsFile = hacGetDescriptionsFileForRead($pluginDir);
+if ($descriptionsFile === '') {
+    $descriptionsFile = hacRuntimeDescriptionsFile($pluginDir);
 }
 
 $cacheStats = ['updated_at' => 'Never', 'entities' => 0, 'domains' => 0];

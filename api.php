@@ -10,6 +10,10 @@
  */
 
 define('HAC_PLUGIN_DIR', __DIR__);
+require_once HAC_PLUGIN_DIR . '/config/settings_helper.php';
+// Runtime paths (inside plugin dir) -- kept for FPP command discovery and
+// backward compatibility. Persistent canonical copies live in FPP's config
+// dir (see settings_helper.php) and survive plugin reinstalls / OS upgrades.
 define('HAC_SETTINGS_INI', HAC_PLUGIN_DIR . '/config/plugin.fpp-haCommands');
 define('HAC_SETTINGS_JSON', HAC_PLUGIN_DIR . '/config/ha_settings.json');
 define('HAC_CACHE_FILE', HAC_PLUGIN_DIR . '/config/entities_cache.json');
@@ -21,16 +25,10 @@ function hacLog($msg) {
     file_put_contents(HAC_LOG_FILE, date('Y-m-d H:i:s') . ' fpp-haCommands api: ' . $msg . "\n", FILE_APPEND | LOCK_EX);
 }
 
-function hacGetSettings() {
-    if (file_exists(HAC_SETTINGS_INI)) {
-        $s = parse_ini_file(HAC_SETTINGS_INI);
-        return ['ha_url' => $s['ha_url'] ?? '', 'ha_token' => $s['ha_token'] ?? ''];
-    }
-    if (file_exists(HAC_SETTINGS_JSON)) {
-        return json_decode(file_get_contents(HAC_SETTINGS_JSON), true) ?: ['ha_url' => '', 'ha_token' => ''];
-    }
-    return ['ha_url' => '', 'ha_token' => ''];
-}
+// Note: hacGetSettings() is provided by config/settings_helper.php.
+// It checks the persistent canonical file first, then legacy runtime paths,
+// and auto-migrates legacy -> canonical. Calls below use hacGetSettings()
+// with no args (plugin dir auto-detected).
 
 function hacCallHA($method, $endpoint, $data = null) {
     $settings = hacGetSettings();
@@ -75,10 +73,11 @@ function hacCallHA($method, $endpoint, $data = null) {
 }
 
 function hacGetEntitiesFromCache($domain = null) {
-    if (!file_exists(HAC_CACHE_FILE)) {
+    $cacheFile = hacGetCacheFileForRead(HAC_PLUGIN_DIR);
+    if ($cacheFile === '' || !file_exists($cacheFile)) {
         return [];
     }
-    $cache = json_decode(file_get_contents(HAC_CACHE_FILE), true);
+    $cache = json_decode(file_get_contents($cacheFile), true);
     $entitiesByDomain = $cache['entities_by_domain'] ?? [];
 
     if ($domain === null || $domain === 'all') {
@@ -98,10 +97,11 @@ function hacGetEntitiesFromCache($domain = null) {
 }
 
 function hacGetCachedDomains() {
-    if (!file_exists(HAC_CACHE_FILE)) {
+    $cacheFile = hacGetCacheFileForRead(HAC_PLUGIN_DIR);
+    if ($cacheFile === '' || !file_exists($cacheFile)) {
         return [];
     }
-    $cache = json_decode(file_get_contents(HAC_CACHE_FILE), true);
+    $cache = json_decode(file_get_contents($cacheFile), true);
     $domains = array_keys($cache['entities_by_domain'] ?? []);
     sort($domains);
     return $domains;
@@ -391,8 +391,11 @@ function hacRefreshAll() {
         'entities_by_domain' => $entitiesByDomain,
         'domains' => array_keys($entitiesByDomain)
     ];
-    $result = @file_put_contents(HAC_CACHE_FILE, json_encode($cache, JSON_PRETTY_PRINT | JSON_INVALID_UTF8_IGNORE));
-    if ($result === false) {
+    $cacheJson = json_encode($cache, JSON_PRETTY_PRINT | JSON_INVALID_UTF8_IGNORE);
+    if ($cacheJson === false) {
+        return ['success' => false, 'error' => 'Failed to process entity data — try running Update Entities again.', 'track' => $track];
+    }
+    if (!hacWriteCache($cacheJson, HAC_PLUGIN_DIR)) {
         return ['success' => false, 'error' => 'Could not write entity cache to ' . HAC_CACHE_FILE . '. Check file permissions.', 'track' => $track];
     }
     $track[] = 'wrote_cache';
@@ -406,8 +409,7 @@ function hacRefreshAll() {
     }
     $track[] = 'encoded_commands:' . strlen($json);
 
-    $result = @file_put_contents(HAC_DESCRIPTIONS_FILE, $json);
-    if ($result === false) {
+    if (!hacWriteDescriptions($json, HAC_PLUGIN_DIR)) {
         return ['success' => false, 'error' => 'Could not write command descriptions to ' . HAC_DESCRIPTIONS_FILE . '. Check file permissions.', 'track' => $track];
     }
     $track[] = 'wrote_descriptions';
@@ -571,9 +573,7 @@ function hacRefreshEndpoint() {
         $body = $_POST;
 
         if (!empty($body['ha_url']) && !empty($body['ha_token'])) {
-            $ini = "ha_url=" . rtrim($body['ha_url'], '/') . "\nha_token=" . $body['ha_token'] . "\n";
-            @file_put_contents(HAC_SETTINGS_INI, $ini);
-            @unlink(HAC_SETTINGS_JSON);
+            hacSaveSettings(rtrim($body['ha_url'], '/'), $body['ha_token'], HAC_PLUGIN_DIR);
         }
 
         $result = hacRefreshAll();
@@ -643,32 +643,10 @@ function hacLogsEndpoint() {
 function hacResetEndpoint() {
     $result = ['success' => true, 'message' => 'Plugin has been reset to factory defaults.', 'restart_prompt' => true];
 
-    $cleared = [];
-
-    if (file_exists(HAC_SETTINGS_INI)) {
-        $ini = "ha_url=\nha_token=\n";
-        if (file_put_contents(HAC_SETTINGS_INI, $ini) !== false) {
-            $cleared[] = 'settings';
-        }
-    }
-
-    if (file_exists(HAC_SETTINGS_JSON)) {
-        if (@unlink(HAC_SETTINGS_JSON)) {
-            $cleared[] = 'legacy_settings';
-        }
-    }
-
-    if (file_exists(HAC_CACHE_FILE)) {
-        if (@unlink(HAC_CACHE_FILE)) {
-            $cleared[] = 'entity_cache';
-        }
-    }
-
-    if (file_exists(HAC_DESCRIPTIONS_FILE)) {
-        if (@unlink(HAC_DESCRIPTIONS_FILE)) {
-            $cleared[] = 'command_descriptions';
-        }
-    }
+    // Clear persistent + runtime copies so a reinstall cannot resurrect them.
+    $cleared = hacClearSettingsFiles(HAC_PLUGIN_DIR);
+    $cleared = array_merge($cleared, hacClearCacheFiles(HAC_PLUGIN_DIR));
+    $cleared = array_values(array_unique($cleared));
 
     $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
     @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
@@ -681,19 +659,8 @@ function hacResetEndpoint() {
 function hacResetCacheEndpoint() {
     $result = ['success' => true, 'message' => 'Cached entities and descriptions have been cleared.', 'restart_prompt' => true];
 
-    $cleared = [];
-
-    if (file_exists(HAC_CACHE_FILE)) {
-        if (@unlink(HAC_CACHE_FILE)) {
-            $cleared[] = 'entity_cache';
-        }
-    }
-
-    if (file_exists(HAC_DESCRIPTIONS_FILE)) {
-        if (@unlink(HAC_DESCRIPTIONS_FILE)) {
-            $cleared[] = 'command_descriptions';
-        }
-    }
+    // Clear persistent + runtime copies; HA URL/token are preserved.
+    $cleared = hacClearCacheFiles(HAC_PLUGIN_DIR);
 
     $opts = ['http' => ['method' => 'PUT', 'header' => 'Content-Type: application/json', 'content' => '1']];
     @file_get_contents('http://localhost/api/settings/restartFlag', false, stream_context_create($opts));
@@ -737,25 +704,67 @@ function hacCheckUpdatesEndpoint() {
     ]);
 }
 
-function hacUpdateEndpoint() {
-    $pluginDir = HAC_PLUGIN_DIR;
-    $backupDir = sys_get_temp_dir() . '/fpp-ha-update-backup';
-
-    @mkdir($backupDir, 0777, true);
-
-    $configFiles = [
-        'config/ha_settings.json',
-        'config/plugin.fpp-haCommands',
-        'config/entities_cache.json',
-        'commands/descriptions.json',
-    ];
-
-    foreach ($configFiles as $file) {
-        $src = $pluginDir . '/' . $file;
-        if (file_exists($src)) {
-            @copy($src, $backupDir . '/' . str_replace('/', '_', $file));
+function hacSyncRuntimeToCanonical($pluginDir) {
+    // Push latest runtime copies into persistent storage before any git
+    // operation that may wipe the plugin directory. Never fatal.
+    // The cache read also promotes the legacy canonical name
+    // (plugin.fpp-haCommands.cache.json) to the renamed
+    // plugin.fpp-haCommands.entities.json when needed.
+    $s = hacGetSettings($pluginDir);
+    if (!empty($s['ha_url']) || !empty($s['ha_token'])) {
+        hacSaveSettings($s['ha_url'], $s['ha_token'], $pluginDir);
+    }
+    hacGetCacheFileForRead($pluginDir);
+    $rtCache = hacRuntimeCacheFile($pluginDir);
+    if (@file_exists($rtCache)) {
+        $raw = @file_get_contents($rtCache);
+        if ($raw !== false) {
+            hacWriteCache($raw, $pluginDir);
         }
     }
+    $rtDesc = hacRuntimeDescriptionsFile($pluginDir);
+    if (@file_exists($rtDesc)) {
+        $raw = @file_get_contents($rtDesc);
+        if ($raw !== false) {
+            hacWriteDescriptions($raw, $pluginDir);
+        }
+    }
+}
+
+function hacRestoreRuntimeFromCanonical($pluginDir) {
+    // Pull persistent copies back into the plugin dir after git operations
+    // (fresh clone / clean -fd deletes runtime copies). Never fatal.
+    hacGetSettings($pluginDir);
+    hacGetCacheFileForRead($pluginDir);
+    hacGetDescriptionsFileForRead($pluginDir);
+}
+
+function hacFixPluginPermissions($pluginDir) {
+    @chmod($pluginDir . '/config', 0775);
+    @chmod($pluginDir . '/commands', 0775);
+    foreach ((array)@glob($pluginDir . '/config/*') as $f) {
+        @chmod($f, 0664);
+    }
+    foreach ((array)@glob($pluginDir . '/commands/*') as $f) {
+        @chmod($f, 0664);
+    }
+    foreach ((array)@glob($pluginDir . '/commands/*.php') as $cmd) {
+        @chmod($cmd, 0755);
+    }
+    // Tighten token files when ownership allows (see hacSaveSettings).
+    foreach ([hacCanonicalSettingsFile(), hacRuntimeSettingsFile($pluginDir)] as $sf) {
+        if (@file_exists($sf) && @chown($sf, 'fpp') && @chgrp($sf, 'fpp')) {
+            @chmod($sf, 0600);
+        }
+    }
+}
+
+function hacUpdateEndpoint() {
+    $pluginDir = HAC_PLUGIN_DIR;
+
+    // Persist everything first: canonical copies survive git clean/reset,
+    // /tmp backups do not survive reboot.
+    hacSyncRuntimeToCanonical($pluginDir);
 
     if (is_dir($pluginDir . '/.git')) {
         exec('git -C ' . escapeshellarg($pluginDir) . ' fetch origin 2>&1');
@@ -764,28 +773,15 @@ function hacUpdateEndpoint() {
         exec('git -C ' . escapeshellarg($pluginDir) . ' reset --hard origin/main 2>&1');
     }
 
-    foreach ($configFiles as $file) {
-        $backupFile = $backupDir . '/' . str_replace('/', '_', $file);
-        if (file_exists($backupFile)) {
-            $destDir = dirname($pluginDir . '/' . $file);
-            @mkdir($destDir, 0777, true);
-            @copy($backupFile, $pluginDir . '/' . $file);
-        }
+    // settings_helper.php may have been updated by the pull; reload it so
+    // restore uses the latest paths, then restore runtime from canonical.
+    $helperFile = $pluginDir . '/config/settings_helper.php';
+    if (file_exists($helperFile)) {
+        include_once $helperFile;
     }
+    hacRestoreRuntimeFromCanonical($pluginDir);
 
-    exec('rm -rf ' . escapeshellarg($backupDir));
-
-    @chmod($pluginDir . '/config', 0775);
-    @chmod($pluginDir . '/commands', 0775);
-    foreach (glob($pluginDir . '/config/*') as $f) {
-        @chmod($f, 0664);
-    }
-    foreach (glob($pluginDir . '/commands/*') as $f) {
-        @chmod($f, 0664);
-    }
-    foreach (glob($pluginDir . '/commands/*.php') as $cmd) {
-        @chmod($cmd, 0755);
-    }
+    hacFixPluginPermissions($pluginDir);
 
     $pluginInfoFile = $pluginDir . '/pluginInfo.json';
     if (file_exists($pluginInfoFile)) {
@@ -811,23 +807,9 @@ function hacUpdateEndpoint() {
 
 function hacReinstallEndpoint() {
     $pluginDir = HAC_PLUGIN_DIR;
-    $backupDir = sys_get_temp_dir() . '/fpp-ha-reinstall-backup';
 
-    @mkdir($backupDir, 0777, true);
-
-    $configFiles = [
-        'config/ha_settings.json',
-        'config/plugin.fpp-haCommands',
-        'config/entities_cache.json',
-        'commands/descriptions.json',
-    ];
-
-    foreach ($configFiles as $file) {
-        $src = $pluginDir . '/' . $file;
-        if (file_exists($src)) {
-            @copy($src, $backupDir . '/' . str_replace('/', '_', $file));
-        }
-    }
+    // Same persistent-storage flow as update: canonical survives the wipe.
+    hacSyncRuntimeToCanonical($pluginDir);
 
     if (is_dir($pluginDir . '/.git')) {
         exec('git -C ' . escapeshellarg($pluginDir) . ' fetch origin 2>&1');
@@ -836,28 +818,13 @@ function hacReinstallEndpoint() {
         exec('git -C ' . escapeshellarg($pluginDir) . ' reset --hard origin/main 2>&1');
     }
 
-    foreach ($configFiles as $file) {
-        $backupFile = $backupDir . '/' . str_replace('/', '_', $file);
-        if (file_exists($backupFile)) {
-            $destDir = dirname($pluginDir . '/' . $file);
-            @mkdir($destDir, 0777, true);
-            @copy($backupFile, $pluginDir . '/' . $file);
-        }
+    $helperFile = $pluginDir . '/config/settings_helper.php';
+    if (file_exists($helperFile)) {
+        include_once $helperFile;
     }
+    hacRestoreRuntimeFromCanonical($pluginDir);
 
-    exec('rm -rf ' . escapeshellarg($backupDir));
-
-    @chmod($pluginDir . '/config', 0775);
-    @chmod($pluginDir . '/commands', 0775);
-    foreach (glob($pluginDir . '/config/*') as $f) {
-        @chmod($f, 0664);
-    }
-    foreach (glob($pluginDir . '/commands/*') as $f) {
-        @chmod($f, 0664);
-    }
-    foreach (glob($pluginDir . '/commands/*.php') as $cmd) {
-        @chmod($cmd, 0755);
-    }
+    hacFixPluginPermissions($pluginDir);
 
     $pluginInfoFile = $pluginDir . '/pluginInfo.json';
     if (file_exists($pluginInfoFile)) {

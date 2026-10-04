@@ -10,8 +10,7 @@
 
 <?php
 $pluginDir = dirname(__DIR__);
-$iniFile = $pluginDir . '/config/plugin.fpp-haCommands';
-$oldJsonFile = $pluginDir . '/config/ha_settings.json';
+require_once $pluginDir . '/config/settings_helper.php';
 $logDir = getenv('LOGDIR') ?: '/home/fpp/media/logs';
 $logFile = $logDir . '/plugin-fpp-haCommands.log';
 
@@ -20,17 +19,9 @@ function hacLog($msg) {
     file_put_contents($logFile, date('Y-m-d H:i:s') . ' fpp-haCommands get_state: ' . $msg . "\n", FILE_APPEND | LOCK_EX);
 }
 
-$haUrl = '';
-$haToken = '';
-if (file_exists($iniFile)) {
-    $s = parse_ini_file($iniFile);
-    $haUrl = rtrim($s['ha_url'] ?? '', '/');
-    $haToken = $s['ha_token'] ?? '';
-} elseif (file_exists($oldJsonFile)) {
-    $s = json_decode(file_get_contents($oldJsonFile), true);
-    $haUrl = rtrim($s['ha_url'] ?? '', '/');
-    $haToken = $s['ha_token'] ?? '';
-}
+$hacSettings = hacGetSettings($pluginDir);
+$haUrl = rtrim($hacSettings['ha_url'] ?? '', '/');
+$haToken = $hacSettings['ha_token'] ?? '';
 
 if (empty($haUrl) || empty($haToken)) {
     $msg = "HA URL or Token not configured.\n";

@@ -67,14 +67,14 @@
                 "about": "operator",
                 "keptDays": null,
                 "canDelete": true,
-                "where": "/home/fpp/media/plugins/fpp-haCommands/config/plugin.fpp-haCommands"
+                "where": "/home/fpp/media/config/plugin.fpp-haCommands (persistent; mirrored to plugin config dir for runtime)"
             },
             {
                 "what": "Home Assistant Entities",
                 "about": "operator",
                 "keptDays": null,
                 "canDelete": true,
-                "where": "/home/fpp/media/plugins/fpp-haCommands/config/entities_cache.json"
+                "where": "/home/fpp/media/config/plugin.fpp-haCommands.entities.json and plugin.fpp-haCommands.descriptions.json (mirrored to plugin config/commands dirs)"
             },
             {
                 "what": "Logs",
